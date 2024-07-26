@@ -1,0 +1,14 @@
+README.md
+setup.py
+hca_metadata_manager/__init__.py
+hca_metadata_manager/config.py
+hca_metadata_manager/gdrive_config.py
+hca_metadata_manager/utils.py
+hca_metadata_manager/workflow.py
+hca_metadata_manager.egg-info/PKG-INFO
+hca_metadata_manager.egg-info/SOURCES.txt
+hca_metadata_manager.egg-info/dependency_links.txt
+hca_metadata_manager.egg-info/requires.txt
+hca_metadata_manager.egg-info/top_level.txt
+tests/__init__.py
+tests/test_utils.py

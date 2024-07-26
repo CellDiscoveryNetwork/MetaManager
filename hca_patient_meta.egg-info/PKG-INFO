@@ -1,0 +1,12 @@
+Metadata-Version: 2.1
+Name: hca_patient_meta
+Version: 0.1
+Requires-Dist: gspread
+Requires-Dist: oauth2client
+Requires-Dist: google-auth
+Requires-Dist: google-auth-oauthlib
+Requires-Dist: google-auth-httplib2
+Requires-Dist: google-api-python-client
+Requires-Dist: pandas
+Requires-Dist: numpy
+Requires-Dist: scanpy

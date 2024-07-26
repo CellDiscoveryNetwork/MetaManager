@@ -1,0 +1,47 @@
+/* Main body styling */
+body {
+  font-family: 'Helvetica', sans-serif;
+  color: #333;
+  background-color: #f9f9f9;
+  line-height: 1.6;
+  margin: 0 auto;
+  padding: 20px;
+  max-width: 800px;
+}
+
+/* Header styles */
+h1, h2, h3 {
+  color: #2A3F54;
+}
+
+h1 {
+  border-bottom: 2px solid #2A3F54;
+  padding-bottom: 0.3em;
+}
+
+/* Image styling for better presentation */
+img {
+  width: 100%; /* Ensures that the image takes full width of its container */
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  border: 1px solid #ddd;
+  box-shadow: 2px 2px 5px #aaa;
+}
+
+/* Code block styling for clarity */
+code {
+  font-family: 'Courier New', Courier, monospace;
+  background-color: #eff0f1;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+/* Footer styling for additional information */
+.footer {
+  text-align: center;
+  margin-top: 50px;
+  font-style: italic;
+  color: #777;
+}

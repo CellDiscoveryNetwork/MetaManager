@@ -1,0 +1,140 @@
+---
+title: "Collecting metadata in large-scale projects"
+subtitle: "A case study of the HCA integrated gut cell atlas"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+author: "Kyle Kimler"
+output: 
+  html_document:
+    self_contained: true
+    css: style.css
+---
+
+```{r setup, include=FALSE}
+library(reticulate)
+use_virtualenv("/Users/kylekimler/pyenvs/metamanager", required = TRUE)
+Sys.setenv(RETICULATE_PYTHON = "/Users/kylekimler/pyenvs/metamanager/bin/python")
+```
+
+# Introduction
+
+Human experiments often have a complex design and a great deal of clinical covariates which can affect analysis. 
+The collection of these covariates can itself be a difficult process, because they span multiple experimental levels. 
+This is especially true in single-cell experiments, where thousands of cells are collected per sample, and sometimes multiple samples are collected per individual.
+It is critical to analysis to organize these metadata sufficiently, and if we want to bring in prior data, we need to create or follow a standard metadata to be able to make comparisons.
+Often, required metadata fields won't be included in publications or data repositories, so it is necessary to reach out to the authors of published data. 
+When reaching out, it is important to provide a defined metadata sheet that can be easily read into analysis. For this, we use Google Sheets.
+
+In this vignette, I will demonstrate methods for collecting and harmonizing metadata for human single-cell experiments on an atlas level.
+
+This document provides a walkthrough of the metadata collection process used in the HCA integrated gut cell atlas project, 
+including both the decision-making and technical steps involved.
+
+## Workflow Overview
+
+The first step in the metadata management process is to define the metadata. 
+
+It is crucial to be as comprehensive as possible before we begin collecting data, 
+but these methods are set up to make adding metadata fields later easier.
+
+### Steps 1 and 2: Metadata Fields and Accepted Values
+
+The HCA provides a required metadata schema that also includes metadata fields required by CELLxGENE. 
+We adhere to this schema to make dataset upload to the portals easier. Any datasets that adhere can be uploaded to CELLxGENE and CAP, increasing accessibilty of these datasets to help them reach a wider audience.
+The CELLxGENE-required and many HCA-recommended fields are termed "Tier 1 metadata", and do not include any patient-protected data. 
+"Tier 2 metadata" includes all patient-protected data necessary for the analysis as well as project-specific metadata fields, in this case the fields specific to the gut atlas project.
+These two metadata tiers should be collected separately. Tier 1 can be collected rapidly to make the datasets more accessible,
+while Tier 2 metadata should be carefully considered by the project team and collected via secure channels.
+
+Most metadata fields have some restrictions to what values can be entered. 
+For example, fields like "manner_of_death" are coded to fit a standard, 
+others like "development_stage_ontology_term_id" must adhere to a 10-year age range,
+while others like "library_id" must follow a certain pattern - i.e. a string with no special characters.
+
+First, we create a google sheet to define metadata fields and allowed values for each metadata field, which is shared and filled out by experimenters and those doing the analysis. 
+
+![Metadata Workflow - Steps 1 and 2](/Users/kylekimler/Projects/GCA/graphics/GCA_metadata_workflow_1.png)
+
+Next, this google sheet is used to format two metadata entry google sheets per dataset, tier 1 and tier 2, which can then be sent to authors or used for new experiments. 
+
+I have written some Google Drive API functions to make communication with GDrive easier. These are provided here:
+www.github.com/kylekimler/gdrive_api_extension.py
+
+The HCA metadata schema is downloaded as a csv and used to display descriptions of each field at the top of the sheets.
+
+#### Python code to create Metadata Entry Google Sheets
+
+```{python, echo=TRUE}
+from hca_metadata_manager.config import authenticate_with_google
+from hca_metadata_manager.utils import initialize_google_sheets
+from hca_metadata_manager.workflow import upload_metadata_to_drive, apply_dropdowns
+import pandas as pd
+
+gc = initialize_google_sheets()
+
+# You should also authenticate separately for other operations
+from oauth2client.service_account import ServiceAccountCredentials
+credentials_file = "/Users/kylekimler/OAuth_kk_metadata_uploader2.json"
+
+scopes = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
+
+credentials = authenticate_with_google(scopes, credentials_file)
+# Insert your code here used for downloading the allowed metadata entries sheet, and configuring apply_dropdowns.
+# First, find the google sheet ID of the allowed metadata definitions sheet, found as suffix of the URL of the google sheet:
+# Here is an example we used in the GCA:
+spreadsheet_id = '1eLBCEDKErmDK_nFIkOpATNbbBnnSVpoeqqPJ2uJKWrs'
+
+# Next, open the google sheet using the GDrive API
+spreadsheet = gc.open_by_key(spreadsheet_id)
+
+# Read each tab of the sheet into a pandas DataFrame
+tabs = ['Tier 1 Dataset Metadata', 'Tier 1 Donor Metadata', 'Tier 1 Sample Metadata', 'Tier 2 Donor Metadata', 'Tier 2 Sample Metadata']
+metadata_dfs = {}
+for tab in tabs:
+    worksheet = spreadsheet.worksheet(tab)
+    data = worksheet.get_all_records()
+    metadata_dfs[tab] = pd.DataFrame(data)
+
+# Display the first few rows of each DataFrame for verification
+for tab, df in metadata_dfs.items():
+    print(f"First few rows of {tab}:")
+    print(df.head())
+
+# Show downloading the HCA schema and applying that to the entry google sheet
+# Show code for generating the two dummy metadata entry google sheets here
+```
+
+### Steps 3 to 6: Metadata Handling
+
+These metadata google sheets can be created ad hoc as above or for datasets that already exist.
+When building an atlas, it can be a lot of work to pre-fill these based on data available online,
+but it may help increase engagement from dataset authors when we request completion.
+
+![Metadata Workflow - Steps 3 to 6](/Users/kylekimler/Projects/GCA/graphics/GCA_metadata_workflow_2.png)
+
+### Code for generating and pre-filling a google sheet for an existing dataset
+
+```{python, echo=TRUE}
+
+```
+
+Once these google sheets are created, they can be easily downloaded if they are in a single folder.
+Once we have them, we can create reports that help us determine how well the sheets were filled out.
+
+#### Weekly Reporting
+
+```{python, echo=TRUE}
+# Insert your R code here that you use for generating weekly reports.
+```
+
+Some mistakes can be easily fixed, while others have to be addressed by authors. Since the google sheets are accessible online, anyone can edit them to help out!
+
+### Atlas metrics
+
+Lastly, these metadata can be used to create metrics about the project for presentation and analysis purposes.
+
+```{python, echo=TRUE}
+```
+
+# Conclusion
+
+Summarize the key points covered in this tutorial and any conclusions or next steps.

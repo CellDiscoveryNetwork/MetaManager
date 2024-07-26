@@ -1,0 +1,9 @@
+README.md
+setup.py
+hca_patient_meta.egg-info/PKG-INFO
+hca_patient_meta.egg-info/SOURCES.txt
+hca_patient_meta.egg-info/dependency_links.txt
+hca_patient_meta.egg-info/requires.txt
+hca_patient_meta.egg-info/top_level.txt
+tests/__init__.py
+tests/test_utils.py
