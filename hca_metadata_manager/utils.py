@@ -10,6 +10,8 @@ import os
 import traceback
 from .gdrive_config import GOOGLE_API_CONFIG, authenticate_with_google
 from .config import authenticate_with_google
+import pandas as pd
+import pkg_resources
 
 def initialize_google_sheets():
     """
@@ -611,3 +613,42 @@ def move_sheet_in_drive(file_id, folder_id, credentials):
                                  addParents=folder_id,
                                  removeParents=previous_parents,
                                  fields='id, parents').execute()
+    
+def load_descriptions():
+    """
+    Load descriptions from a CSV file located in the 'data/' directory of the repository.
+    """
+    # The resource_filename function takes the package name and relative path to the file
+    resource_path = pkg_resources.resource_filename('your_package_name', 'data/metadata_descriptions.csv')
+    
+    # Load the descriptions CSV
+    descriptions = pd.read_csv(resource_path, index_col=0)
+    return descriptions
+
+def add_metadata_descriptions(metadata_dfs):
+    """
+    Combine metadata definitions with descriptions to prepare for upload.
+
+    Args:
+        metadata_dfs: Dictionary containing metadata DataFrames for each tab.
+    
+    Returns:
+        A dictionary with the combined data ready for upload.
+    """
+    # Load descriptions
+    descriptions = pd.read_csv('data/metadata_descriptions.csv', index_col=0)
+    updated_dfs = {}  # Dictionary to store updated DataFrames
+    # Process each metadata DataFrame
+    for tab_name, metadata_df in metadata_dfs.items():
+        # Find shared columns between descriptions and metadata DataFrame
+        shared_cols = descriptions.columns.intersection(metadata_df.columns)
+        # Combine descriptions with metadata DataFrame
+        combined_df = pd.concat([
+            descriptions[shared_cols],  # Description rows
+            metadata_df                 # Original metadata DataFrame
+        ])
+        # Reset index to clean up the DataFrame
+        combined_df.reset_index(drop=True, inplace=True)
+        # Store the updated DataFrame in the dictionary
+        updated_dfs[tab_name] = combined_df
+    return updated_dfs

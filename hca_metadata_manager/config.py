@@ -1,6 +1,7 @@
 import os
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
 
 # Google Sheets config
 # For this metadata manager, we need google sheets and google drive

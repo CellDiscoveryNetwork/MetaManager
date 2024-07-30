@@ -61,32 +61,37 @@ www.github.com/kylekimler/gdrive_api_extension.py
 
 The HCA metadata schema is downloaded as a csv and used to display descriptions of each field at the top of the sheets.
 
+First, set up and obtain the python code at: https://github.com/kylekimler/MetaManager-HCA
+
 #### Python code to create Metadata Entry Google Sheets
-
-```{python, echo=TRUE}
+```{python set up libraries, echo=TRUE}
 from hca_metadata_manager.config import authenticate_with_google
-from hca_metadata_manager.utils import initialize_google_sheets
-from hca_metadata_manager.workflow import upload_metadata_to_drive, apply_dropdowns
+from hca_metadata_manager.utils import initialize_google_sheets, add_metadata_descriptions
+from hca_metadata_manager.workflow import generate_empty_metadata_entry_sheets, apply_dropdowns
 import pandas as pd
+# import scanpy as sc
+```
 
+```{python initialize google sheets, echo=TRUE}
 gc = initialize_google_sheets()
 
-# You should also authenticate separately for other operations
-from oauth2client.service_account import ServiceAccountCredentials
 credentials_file = "/Users/kylekimler/OAuth_kk_metadata_uploader2.json"
 
 scopes = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
 credentials = authenticate_with_google(scopes, credentials_file)
-# Insert your code here used for downloading the allowed metadata entries sheet, and configuring apply_dropdowns.
-# First, find the google sheet ID of the allowed metadata definitions sheet, found as suffix of the URL of the google sheet:
-# Here is an example we used in the GCA:
+
+# First, find the google sheet ID of the allowed metadata definitions sheet, found as suffix of the URL of the google sheet
+# For example, if your google sheet is https://docs.google.com/spreadsheets/d/1eLBCEDKErmDK_nFIkOpATNbbBnnSVpoeqqPJ2uJKWrs
+# Then the id is:
 spreadsheet_id = '1eLBCEDKErmDK_nFIkOpATNbbBnnSVpoeqqPJ2uJKWrs'
 
 # Next, open the google sheet using the GDrive API
 spreadsheet = gc.open_by_key(spreadsheet_id)
+```
 
-# Read each tab of the sheet into a pandas DataFrame
+Once you've opened the sheet with the API, you can convert it into a pandas dataframe.
+```{python load definitions google sheet, echo = TRUE}
 tabs = ['Tier 1 Dataset Metadata', 'Tier 1 Donor Metadata', 'Tier 1 Sample Metadata', 'Tier 2 Donor Metadata', 'Tier 2 Sample Metadata']
 metadata_dfs = {}
 for tab in tabs:
@@ -94,13 +99,52 @@ for tab in tabs:
     data = worksheet.get_all_records()
     metadata_dfs[tab] = pd.DataFrame(data)
 
-# Display the first few rows of each DataFrame for verification
+# And display what was in the sheet:
 for tab, df in metadata_dfs.items():
     print(f"First few rows of {tab}:")
     print(df.head())
+    break
+```
 
-# Show downloading the HCA schema and applying that to the entry google sheet
-# Show code for generating the two dummy metadata entry google sheets here
+Once you've downloaded your sheets containing the allowed metadata entries, we like to add examples and descriptions as our friends at HCA have created.
+I have placed the descriptions sheet in the data/metadata_descriptions.csv. We can load and add these as header columns automatically using built-in functions here
+
+```{python add metadata descriptions, echo=TRUE}
+metadata_dfs = add_metadata_descriptions(metadata_dfs)
+for tab, df in metadata_dfs.items():
+    print(f"First few rows of {tab}:")
+    print(df.head())
+    break
+```
+
+Now that we have the outline for our entry google sheet, we need a google drive folder to store all our sheets. 
+We can go to https://drive.google.com and create a new folder via the top left button. 
+Then, navigate to the new folder and take the URL suffix which the API will need to find the folder.
+
+For example, this folder: https://drive.google.com/drive/folders/1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR,
+the suffix is 1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR.
+
+And finally we can use the upload function to use the above Drive sheet to generate metadata entry sheets:
+
+We can generate empty sheets to send to our collaborators as follows:
+```{python generate metadata sheets, echo=TRUE}
+folder_id = "1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR"
+
+generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_id, dataset_id = 'Kimler2025')
+
+```
+
+Or, we can prefill these sheets based on anndata objects we find online, using a different workflow function
+
+```{python empty chunks, echo=TRUE}
+# adata = sc.read_h5ad('/Users/kylekimler/gitHub/metaManager-HCA/data/pbmc3k_processed.h5ad')
+# adata.obs['dataset_id'] = ['pbmc3k'] * adata.n_obs
+# adata.obs['donor_id'] = np.random.choice(['Donor1', 'Donor2', 'Donor3'], size=adata.n_obs)
+# adata.obs['sample_id'] = np.random.choice(['Sample1', 'Sample2'], size=adata.n_obs)
+# adata.obs['author_cell_type'] = adata.obs['louvain']
+
+# the folder_id is the suffix of the URL:
+# upload_metadata_to_drive(adata, metadata_config, gc, credentials, folder_id)
 ```
 
 ### Steps 3 to 6: Metadata Handling
@@ -113,27 +157,16 @@ but it may help increase engagement from dataset authors when we request complet
 
 ### Code for generating and pre-filling a google sheet for an existing dataset
 
-```{python, echo=TRUE}
-
-```
-
 Once these google sheets are created, they can be easily downloaded if they are in a single folder.
 Once we have them, we can create reports that help us determine how well the sheets were filled out.
 
 #### Weekly Reporting
-
-```{python, echo=TRUE}
-# Insert your R code here that you use for generating weekly reports.
-```
 
 Some mistakes can be easily fixed, while others have to be addressed by authors. Since the google sheets are accessible online, anyone can edit them to help out!
 
 ### Atlas metrics
 
 Lastly, these metadata can be used to create metrics about the project for presentation and analysis purposes.
-
-```{python, echo=TRUE}
-```
 
 # Conclusion
 

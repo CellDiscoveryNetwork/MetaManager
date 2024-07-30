@@ -11,7 +11,7 @@
 
 <meta name="author" content="Kyle Kimler" />
 
-<meta name="date" content="2024-07-26" />
+<meta name="date" content="2024-07-30" />
 
 <title>Collecting metadata in large-scale projects</title>
 
@@ -398,7 +398,7 @@ projects</h1>
 <h3 class="subtitle">A case study of the HCA integrated gut cell
 atlas</h3>
 <h4 class="author">Kyle Kimler</h4>
-<h4 class="date">26 July 2024</h4>
+<h4 class="date">30 July 2024</h4>
 
 </div>
 
@@ -466,78 +466,77 @@ with GDrive easier. These are provided here:
 www.github.com/kylekimler/gdrive_api_extension.py</p>
 <p>The HCA metadata schema is downloaded as a csv and used to display
 descriptions of each field at the top of the sheets.</p>
+<p>First, set up and obtain the python code at: <a href="https://github.com/kylekimler/MetaManager-HCA" class="uri">https://github.com/kylekimler/MetaManager-HCA</a></p>
 <div id="python-code-to-create-metadata-entry-google-sheets" class="section level4">
 <h4>Python code to create Metadata Entry Google Sheets</h4>
 <pre class="python"><code>from hca_metadata_manager.config import authenticate_with_google
 from hca_metadata_manager.utils import initialize_google_sheets
-from hca_metadata_manager.workflow import upload_metadata_to_drive, apply_dropdowns
+from hca_metadata_manager.workflow import generate_empty_metadata_entry_sheets, apply_dropdowns
 import pandas as pd
+# import scanpy as sc</code></pre>
+<pre class="python"><code>gc = initialize_google_sheets()
 
-gc = initialize_google_sheets()
-
-# You should also authenticate separately for other operations
-from oauth2client.service_account import ServiceAccountCredentials
 credentials_file = &quot;/Users/kylekimler/OAuth_kk_metadata_uploader2.json&quot;
 
 scopes = [&#39;https://www.googleapis.com/auth/spreadsheets&#39;, &#39;https://www.googleapis.com/auth/drive&#39;]
 
 credentials = authenticate_with_google(scopes, credentials_file)
-# Insert your code here used for downloading the allowed metadata entries sheet, and configuring apply_dropdowns.
-# First, find the google sheet ID of the allowed metadata definitions sheet, found as suffix of the URL of the google sheet:
-# Here is an example we used in the GCA:
+
+# First, find the google sheet ID of the allowed metadata definitions sheet, found as suffix of the URL of the google sheet
+# For example, if your google sheet is https://docs.google.com/spreadsheets/d/1eLBCEDKErmDK_nFIkOpATNbbBnnSVpoeqqPJ2uJKWrs
+# Then the id is:
 spreadsheet_id = &#39;1eLBCEDKErmDK_nFIkOpATNbbBnnSVpoeqqPJ2uJKWrs&#39;
 
 # Next, open the google sheet using the GDrive API
-spreadsheet = gc.open_by_key(spreadsheet_id)
-
-# Read each tab of the sheet into a pandas DataFrame
-tabs = [&#39;Tier 1 Dataset Metadata&#39;, &#39;Tier 1 Donor Metadata&#39;, &#39;Tier 1 Sample Metadata&#39;, &#39;Tier 2 Donor Metadata&#39;, &#39;Tier 2 Sample Metadata&#39;]
+spreadsheet = gc.open_by_key(spreadsheet_id)</code></pre>
+<p>Once you’ve opened the sheet with the API, you can convert it into a
+pandas dataframe.</p>
+<pre class="python"><code>tabs = [&#39;Tier 1 Dataset Metadata&#39;, &#39;Tier 1 Donor Metadata&#39;, &#39;Tier 1 Sample Metadata&#39;, &#39;Tier 2 Donor Metadata&#39;, &#39;Tier 2 Sample Metadata&#39;]
 metadata_dfs = {}
 for tab in tabs:
     worksheet = spreadsheet.worksheet(tab)
     data = worksheet.get_all_records()
     metadata_dfs[tab] = pd.DataFrame(data)
 
-# Display the first few rows of each DataFrame for verification
+# And display what was in the sheet:
 for tab, df in metadata_dfs.items():
     print(f&quot;First few rows of {tab}:&quot;)
-    print(df.head())</code></pre>
+    print(df.head())
+    break</code></pre>
 <pre><code>## First few rows of Tier 1 Dataset Metadata:
-##   reference_genome     alignment_software  ... ambient_count_correction consortia
-## 0           GRCh38       cellranger_3.1.0  ...               cellbender    HUBMAP
-## 1           GRCh37       starsolo_2.7.10a  ...                  decontX  Helmsley
-## 2           GRCm39  kallisto_bustools_0.1  ...                     none       CZI
-## 3           GRCm38       cellranger_5.0.0  ...                                HCA
-## 4           GRCm37       cellranger_6.1.2  ...                                   
+##   reference_genome     alignment_software  ... consortia sequenced_fragment
+## 0           GRCh38       cellranger_3.1.0  ...    HUBMAP                 3&#39;
+## 1           GRCh37       starsolo_2.7.10a  ...  Helmsley                 5&#39;
+## 2           GRCm39  kallisto_bustools_0.1  ...       CZI        full-length
+## 3           GRCm38       cellranger_5.0.0  ...       HCA                   
+## 4           GRCm37       cellranger_6.1.2  ...                             
 ## 
-## [5 rows x 5 columns]
-## First few rows of Tier 1 Donor Metadata:
-##   organism_ontology_term_id manner_of_death sex_ontology_term_id
-## 0            NCBITaxon:9606  not_applicable         PATO:0000383
-## 1                                   unknown         PATO:0000384
-## 2                                         0                     
-## 3                                         1                     
-## 4                                         2                     
-## First few rows of Tier 1 Sample Metadata:
-##   tissue_ontology_term  ...      assay
-## 0             duodenum  ...  10x 3&#39; v1
-## 1              jejunum  ...  10x 3&#39; v2
-## 2                ileum  ...  10x 3&#39; v3
-## 3      ascending_colon  ...  10x 5&#39; v1
-## 4     transverse_colon  ...  10x 5&#39; v2
-## 
-## [5 rows x 11 columns]
-## First few rows of Tier 2 Donor Metadata:
-## Empty DataFrame
-## Columns: []
-## Index: []
-## First few rows of Tier 2 Sample Metadata:
-## Empty DataFrame
-## Columns: []
-## Index: []</code></pre>
-<pre class="python"><code>
-# Show downloading the HCA schema and applying that to the entry google sheet
-# Show code for generating the two dummy metadata entry google sheets here</code></pre>
+## [5 rows x 6 columns]</code></pre>
+<p>Now that we have the outline for our entry google sheet, we need a
+google drive folder to store all our sheets. We can go to <a href="https://drive.google.com" class="uri">https://drive.google.com</a>
+and create a new folder via the top left button. Then, navigate to the
+new folder and take the URL suffix which the API will need to find the
+folder.</p>
+<p>For example, this folder: <a href="https://drive.google.com/drive/folders/1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR" class="uri">https://drive.google.com/drive/folders/1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR</a>,
+the suffix is 1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR.</p>
+<p>And finally we can use the upload function to use the above Drive
+sheet to generate metadata entry sheets:</p>
+<p>We can generate empty sheets to send to our collaborators or generate
+prefilled sheets based on data we find online.</p>
+<pre class="python"><code>folder_id = &quot;1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR&quot;
+
+generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_id, dataset_id = &#39;Kimler2025&#39;)</code></pre>
+<pre><code>## Sheet1 does not exist or was already deleted.
+## Sheets info: {0: &#39;Dataset Metadata&#39;, 1: &#39;Donor Metadata&#39;, 2: &#39;Sample Metadata&#39;}
+## Sheet1 does not exist or was already deleted.
+## Sheets info: {0: &#39;Donor Metadata&#39;, 1: &#39;Sample Metadata&#39;}</code></pre>
+<pre class="python"><code># adata = sc.read_h5ad(&#39;/Users/kylekimler/gitHub/metaManager-HCA/data/pbmc3k_processed.h5ad&#39;)
+# adata.obs[&#39;dataset_id&#39;] = [&#39;pbmc3k&#39;] * adata.n_obs
+# adata.obs[&#39;donor_id&#39;] = np.random.choice([&#39;Donor1&#39;, &#39;Donor2&#39;, &#39;Donor3&#39;], size=adata.n_obs)
+# adata.obs[&#39;sample_id&#39;] = np.random.choice([&#39;Sample1&#39;, &#39;Sample2&#39;], size=adata.n_obs)
+# adata.obs[&#39;author_cell_type&#39;] = adata.obs[&#39;louvain&#39;]</code></pre>
+<pre class="python"><code># the folder_id is the suffix of the URL:
+# upload_metadata_to_drive(adata, metadata_config, gc, credentials, folder_id)</code></pre>
 </div>
 </div>
 <div id="steps-3-to-6-metadata-handling" class="section level3">
@@ -559,7 +558,6 @@ if they are in a single folder. Once we have them, we can create reports
 that help us determine how well the sheets were filled out.</p>
 <div id="weekly-reporting" class="section level4">
 <h4>Weekly Reporting</h4>
-<pre class="python"><code># Insert your R code here that you use for generating weekly reports.</code></pre>
 <p>Some mistakes can be easily fixed, while others have to be addressed
 by authors. Since the google sheets are accessible online, anyone can
 edit them to help out!</p>

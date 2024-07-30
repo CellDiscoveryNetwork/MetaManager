@@ -2,7 +2,7 @@ import pytest
 import unittest
 import pandas as pd
 from unittest.mock import patch, Mock, MagicMock
-from hca_patient_meta.utils import (
+from hca_metadata_manager.utils import (
     initialize_google_sheets, upload_to_sheet, delete_sheet,
     fetch_sheets_with_indices
 )
@@ -152,14 +152,14 @@ from hca_patient_meta.utils import (
 import unittest
 from unittest.mock import patch, Mock
 import pandas as pd
-from hca_patient_meta.utils import (
+from hca_metadata_manager.utils import (
     initialize_google_sheets, upload_to_sheet, delete_sheet,
     fetch_sheets_with_indices
 )
 
 class TestUtils(unittest.TestCase):
 
-    @patch('hca_patient_meta.utils.authenticate_with_google')
+    @patch('hca_metadata_manager.utils.authenticate_with_google')
     @patch('gspread.authorize')
     def test_initialize_google_sheets(self, mock_authorize, mock_auth):
         mock_auth.return_value = 'mock_credentials'
@@ -205,7 +205,7 @@ class TestUtils(unittest.TestCase):
         mock_batch_update.assert_called_once()
 
 class TestFetchSheetsWithIndices(unittest.TestCase):
-    @patch('hca_patient_meta.utils.build')
+    @patch('hca_metadata_manager.utils.build')
     def test_fetch_sheets_with_indices(self, mock_build):
         # Setup the mock service and response
         mock_service = Mock()
