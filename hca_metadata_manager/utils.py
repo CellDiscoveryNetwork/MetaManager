@@ -703,6 +703,10 @@ def set_dropdown_list_by_id(spreadsheet_id, sheet_index, column_index, num_heade
     sheet_id, max_rows = sheet_properties_cache[sheet_index]
     # Initialize Google Sheets API service
     service = build('sheets', 'v4', credentials=credentials)
+    # Check if there are meaningful values to add in the dropdown
+    if not values or (len(values) == 1 and values[0] == ""):
+        print(f"No valid dropdown values to set for column index {column_index} in sheet index {sheet_index}.")
+        return None  # Exit if no valid values
     # Prepare the request body for setting data validation
     requests = [{
         "setDataValidation": {

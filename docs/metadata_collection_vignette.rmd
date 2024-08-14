@@ -142,7 +142,7 @@ These google sheets contain the tabs specified in the metadata definitions sheet
 ```{python generate metadata sheets, echo=TRUE}
 folder_id = "1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR"
 
-generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_id, dataset_id = 'Kimler2025')
+generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_id, dataset_id = 'Kimler2025', num_header_rows = 3)
 ```
 
 #### Step 3.2 Generating and pre-filling a google sheet using an existing h5ad file

@@ -4,29 +4,23 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from time import sleep
 import pandas as pd
 
-def apply_dropdowns(spreadsheet_id, credentials, gc, metadata_dfs=None, num_header_rows=1, manual_config_mode=False):
+def apply_dropdowns(spreadsheet_id, credentials, gc, 
+    metadata_dfs=None, num_header_rows=1, manual_config_mode=False):
     """
     Apply dropdown configurations to specified Google Sheet based on predefined settings,
     considering additional header rows.
-
-    Args:
-        spreadsheet_id (str): The ID of the Google Spreadsheet.
-        credentials: Google API credentials used for accessing the sheet.
-        gc: Google Sheets client authorized with the gspread library.
-        metadata_dfs: Dictionary of DataFrames loaded from a predefined metadata definitions sheet.
-        num_header_rows (int): Number of header rows in each sheet which should not have dropdowns.
-        manual_config_mode (bool): Whether to use a manual configuration for dropdowns.
     """
+    sheets_info = fetch_sheets_with_indices(spreadsheet_id, credentials)
+    column_cache = {}  # Initialize cache
+    print(f"Starting to apply dropdowns on spreadsheet {spreadsheet_id}")
+    # headers_cache = cache_sheet_columns(spreadsheet_id, credentials)  # Cache column headers
+    properties_cache = cache_sheet_properties(spreadsheet_id, credentials)  # Cache sheet properties
+    column_cache = cache_column_indices(spreadsheet_id, credentials)
     try:
         delete_sheet(spreadsheet_id, "Sheet1", gc)
+        print("Default 'Sheet1' deleted.")
     except gspread.exceptions.WorksheetNotFound:
         print("Sheet1 does not exist or was already deleted.")
-
-    # Fetch sheet index to title mappings
-    sheets_info = fetch_sheets_with_indices(spreadsheet_id, credentials)
-    print("Sheets info:", sheets_info)
-
-    # Define or fetch dropdown configuration
     dropdowns_config = {}
     if manual_config_mode:
         print('Using manual dropdown config mode.')
@@ -55,29 +49,28 @@ def apply_dropdowns(spreadsheet_id, credentials, gc, metadata_dfs=None, num_head
                 'is_primary_data': ['FALSE', 'TRUE']
             },
         }
-        #     'celltype': {
-        #         ''
-        #     }
-        # }
     else:
+        print("Automatically configuring dropdowns based on metadata definitions.")
         for sheet_title, df in metadata_dfs.items():
             valid_rows = df.iloc[num_header_rows:]
             dropdowns_config[sheet_title.lower()] = {col: valid_rows[col].dropna().unique().tolist() for col in df.columns if not valid_rows[col].isnull().all()}
-
+            print(f"Configured dropdowns for '{sheet_title}': {dropdowns_config[sheet_title.lower()]}")
+    dropdowns_config = convert_numeric_to_string(dropdowns_config)
     # Apply dropdowns using the fetched sheet information
     for sheet_index, sheet_title in sheets_info.items():
-        tab_config = dropdowns_config.get(sheet_title, {})
-        for column_name, values in tab_config.items():
-            print('Adding dropdowns to ' + column_name)
-            try:
-                col_index = get_column_index(spreadsheet_id, sheet_index, column_name, credentials)
+        tab_config = dropdowns_config.get(sheet_title.lower(), {})
+        print(f"Applying dropdowns for '{sheet_title}'")
+        if tab_config:  # Only proceed if there's a config to apply
+            for column_name, values in tab_config.items():
+                # col_index = get_column_index(spreadsheet_id, sheet_index, column_name, credentials, column_cache)
+                col_index = get_column_index(sheet_index, column_name, column_cache)
                 if col_index >= 0:
-                    set_dropdown_list_by_id(spreadsheet_id, sheet_index, col_index, num_header_rows, values, credentials)
+                    set_dropdown_list_by_id(spreadsheet_id, sheet_index, col_index, num_header_rows, values, credentials, properties_cache)
                 else:
-                    print(f"Column {column_name} not found in {sheet_title}.")
-            except ValueError as e:
-                print(e)
-
+                    pass
+                    # print(f"Column {column_name} not found in {sheet_title}.")
+        else:
+            print(f"No dropdown configuration found for '{sheet_title}'. Missing or empty configuration.")
 
 # def upload_metadata_to_drive(adata, descriptions, donor_metadata_config, sample_metadata_config,
 #                            dataset_metadata_config, celltype_metadata_config, gc, credentials, folder_id):
@@ -193,53 +186,35 @@ def upload_metadata_to_drive(adata, metadata_config, gc, credentials, folder_id)
             sleep(15)
 
 def generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_id, dataset_id, num_header_rows=1):
-    """
-    Create Google Sheets for Tier 1 and Tier 2 metadata without input from an AnnData object,
-    including only the header rows.
-
-    Args:
-        metadata_dfs: Dictionary of DataFrames loaded from a predefined metadata definitions sheet.
-        gc: Google Sheets client authorized with the gspread library.
-        credentials: Google API credentials.
-        folder_id: Google Drive folder ID where the sheets should be moved.
-        dataset_id: Identifier for the dataset, used in naming the sheets.
-        num_header_rows: Number of header rows to include in the sheet.
-    """
-    dataset_id = dataset_id  # Static dataset ID as requested
-
-    # Define the tiers and associated tabs
+    dataset_id = dataset_id  # Static dataset ID
+    # configure your tier 1 and 2 tabs here
     tiers = {
         'Tier 1': ['Tier 1 Dataset Metadata', 'Tier 1 Donor Metadata', 'Tier 1 Sample Metadata', 'Tier 2 Celltype Metadata'],
         'Tier 2': ['Tier 2 Dataset Metadata', 'Tier 2 Donor Metadata', 'Tier 2 Sample Metadata']
     }
-
+    # and configure what they will be called in the empty sheets
     for tier, tabs in tiers.items():
         SHEET_NAME = f"{dataset_id}_HCA_{tier.lower()}_metadata"
         spreadsheet = gc.create(SHEET_NAME)
         file_id = spreadsheet.id
-        debug_print("Created spreadsheet with ID", file_id)
         for tab in tabs:
-            tab_name = tab.replace('Tier 1 ', '').replace('Tier 2 ', '')
-            debug_print("Processing tab", tab_name)
             if tab in metadata_dfs:
                 metadata_tb = metadata_dfs[tab]
-                debug_print("Initial metadata table", metadata_tb.head())
                 if len(metadata_tb) > num_header_rows:
                     metadata_tb = metadata_tb.iloc[:num_header_rows].copy()
-                debug_print("Metadata table after trimming", metadata_tb)
                 while len(metadata_tb) < num_header_rows + 10:
                     metadata_tb = pd.concat([metadata_tb, pd.DataFrame([{}])], ignore_index=True)
-                upload_to_sheet(metadata_tb, gc, file_id, tab_name)
+                upload_to_sheet(metadata_tb, gc, file_id, tab)
             else:
                 print(f"Missing metadata for {tab}")    
         try:
             delete_sheet(file_id, "Sheet1", gc)
         except gspread.exceptions.WorksheetNotFound:
-            print("Sheet1 does not exist or was already deleted.")
+            print("\n")
         format_all_sheets(file_id, credentials)
         apply_dropdowns(file_id, credentials, gc, metadata_dfs=metadata_dfs, num_header_rows=5)
         move_sheet_in_drive(file_id, folder_id, credentials)
-
+        sleep(30)
 
 # Helper function for debugging
 def debug_print(msg, var):
@@ -248,18 +223,20 @@ def debug_print(msg, var):
 def debug_generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_id, dataset_id, num_header_rows=1):
     debug_print("Starting to generate empty metadata entry sheets", "")
     dataset_id = dataset_id  # Static dataset ID
+    # configure your tier 1 and 2 tabs here
     tiers = {
         'Tier 1': ['Tier 1 Dataset Metadata', 'Tier 1 Donor Metadata', 'Tier 1 Sample Metadata', 'Tier 2 Celltype Metadata'],
         'Tier 2': ['Tier 2 Dataset Metadata', 'Tier 2 Donor Metadata', 'Tier 2 Sample Metadata']
     }
+    # and configure what they will be called in the empty sheets
     for tier, tabs in tiers.items():
         SHEET_NAME = f"{dataset_id}_HCA_{tier.lower()}_metadata"
         spreadsheet = gc.create(SHEET_NAME)
         file_id = spreadsheet.id
         debug_print("Created spreadsheet with ID", file_id)
         for tab in tabs:
-            tab_name = tab.replace('Tier 1 ', '').replace('Tier 2 ', '')
-            debug_print("Processing tab", tab_name)
+            # tab_name = tab.replace('Tier 1 ', '').replace('Tier 2 ', '')
+            debug_print("Processing tab", tab)
             if tab in metadata_dfs:
                 metadata_tb = metadata_dfs[tab]
                 debug_print("Initial metadata table", metadata_tb.head())
@@ -268,7 +245,7 @@ def debug_generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, fo
                 debug_print("Metadata table after trimming", metadata_tb)
                 while len(metadata_tb) < num_header_rows + 10:
                     metadata_tb = pd.concat([metadata_tb, pd.DataFrame([{}])], ignore_index=True)
-                upload_to_sheet(metadata_tb, gc, file_id, tab_name)
+                upload_to_sheet(metadata_tb, gc, file_id, tab)
             else:
                 print(f"Missing metadata for {tab}")    
         try:
@@ -278,4 +255,4 @@ def debug_generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, fo
         format_all_sheets(file_id, credentials)
         apply_dropdowns(file_id, credentials, gc, metadata_dfs=metadata_dfs, num_header_rows=5)
         move_sheet_in_drive(file_id, folder_id, credentials)
-        sleep(15)
+        sleep(30)
