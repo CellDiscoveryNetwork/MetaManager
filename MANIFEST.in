@@ -1,1 +1,2 @@
-include data/metadata_descriptions.csv
+include hca_metadata_manager/data/*
+include data/*

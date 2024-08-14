@@ -18,25 +18,23 @@ Sys.setenv(RETICULATE_PYTHON = "/Users/kylekimler/pyenvs/metamanager/bin/python"
 # Introduction
 
 Human experiments often have a complex design and a great deal of clinical covariates which can affect analysis. 
-The collection of these covariates can itself be a difficult process, because they span multiple experimental levels. 
+The collection of these covariates can be a difficult process because they span multiple experimental levels. 
 This is especially true in single-cell experiments, where thousands of cells are collected per sample, and sometimes multiple samples are collected per individual.
-It is critical to analysis to organize these metadata sufficiently, and if we want to bring in prior data, we need to create or follow a standard metadata to be able to make comparisons.
-Often, required metadata fields won't be included in publications or data repositories, so it is necessary to reach out to the authors of published data. 
-When reaching out, it is important to provide a defined metadata sheet that can be easily read into analysis. For this, we use Google Sheets.
+It is critical to organize these metadata sufficiently, and if we want to bring in prior data, we need to create or follow a standard metadata format to be able to make comparisons.
+When analyzing published data, required metadata fields are sometimes unavailable, so it is necessary to reach out to the authors of published data. 
+When reaching out, providing a standardized metadata sheet can help skip redundant metadata wrangling. 
 
-In this vignette, I will demonstrate methods for collecting and harmonizing metadata for human single-cell experiments on an atlas level.
-
-This document provides a walkthrough of the metadata collection process used in the HCA integrated gut cell atlas project, 
-including both the decision-making and technical steps involved.
+In this vignette, I will demonstrate methods for collecting and harmonizing metadata for human single-cell experiments on an atlas level using Google Sheets.
+We use this collection process in the HCA integrated gut cell atlas project.
 
 ## Workflow Overview
 
-The first step in the metadata management process is to define the metadata. 
+The first step in the metadata management process is to create rigid definitions for the metadata. 
 
 It is crucial to be as comprehensive as possible before we begin collecting data, 
-but these methods are set up to make adding metadata fields later easier.
+while allowing ourselves the possibility of adding or editing fields down the line.
 
-### Steps 1 and 2: Metadata Fields and Accepted Values
+### Steps 1 and 2: Defining Metadata
 
 The HCA provides a required metadata schema that also includes metadata fields required by CELLxGENE. 
 We adhere to this schema to make dataset upload to the portals easier. Any datasets that adhere can be uploaded to CELLxGENE and CAP, increasing accessibilty of these datasets to help them reach a wider audience.
@@ -63,7 +61,7 @@ The HCA metadata schema is downloaded as a csv and used to display descriptions 
 
 First, set up and obtain the python code at: https://github.com/kylekimler/MetaManager-HCA
 
-#### Python code to create Metadata Entry Google Sheets
+#### Step 1: Loading the metadata definitions Google Sheets
 ```{python set up libraries, echo=TRUE}
 from hca_metadata_manager.config import authenticate_with_google
 from hca_metadata_manager.utils import initialize_google_sheets, add_metadata_descriptions
@@ -72,9 +70,13 @@ import pandas as pd
 # import scanpy as sc
 ```
 
+First, the google drive API must be initialized using the python library and an Oauth json credentials file must be created as in:
+[https://developers.google.com/sheets/api/quickstart/go]
+
 ```{python initialize google sheets, echo=TRUE}
 gc = initialize_google_sheets()
 
+# this credentials file is used to authorize the python API to access your Google Sheets.
 credentials_file = "/Users/kylekimler/OAuth_kk_metadata_uploader2.json"
 
 scopes = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -90,9 +92,10 @@ spreadsheet_id = '1eLBCEDKErmDK_nFIkOpATNbbBnnSVpoeqqPJ2uJKWrs'
 spreadsheet = gc.open_by_key(spreadsheet_id)
 ```
 
-Once you've opened the sheet with the API, you can convert it into a pandas dataframe.
+#### Step 2: Downloading the accepted metadata google sheet
+Once you've opened the metadata definitions sheet with the API, we can download and convert it into a pandas dataframe.
 ```{python load definitions google sheet, echo = TRUE}
-tabs = ['Tier 1 Dataset Metadata', 'Tier 1 Donor Metadata', 'Tier 1 Sample Metadata', 'Tier 2 Donor Metadata', 'Tier 2 Sample Metadata']
+tabs = ['Tier 1 Dataset Metadata', 'Tier 1 Donor Metadata', 'Tier 1 Sample Metadata', 'Tier 1 Celltype Metadata', 'Tier 2 Dataset Metadata', 'Tier 2 Donor Metadata', 'Tier 2 Sample Metadata']
 metadata_dfs = {}
 for tab in tabs:
     worksheet = spreadsheet.worksheet(tab)
@@ -106,9 +109,8 @@ for tab, df in metadata_dfs.items():
     break
 ```
 
-Once you've downloaded your sheets containing the allowed metadata entries, we like to add examples and descriptions as our friends at HCA have created.
+After downloading the google sheet containing the allowed metadata entries, we add examples and descriptions as our friends at HCA have created.
 I have placed the descriptions sheet in the data/metadata_descriptions.csv. We can load and add these as header columns automatically using built-in functions here
-
 ```{python add metadata descriptions, echo=TRUE}
 metadata_dfs = add_metadata_descriptions(metadata_dfs)
 for tab, df in metadata_dfs.items():
@@ -117,52 +119,63 @@ for tab, df in metadata_dfs.items():
     break
 ```
 
-Now that we have the outline for our entry google sheet, we need a google drive folder to store all our sheets. 
-We can go to https://drive.google.com and create a new folder via the top left button. 
+Now that we have the data object, a pandas dataframe, describing the data entry google sheets, we need a google drive folder to store all our sheets. 
+Go to https://drive.google.com and create a new folder via the top left + button. 
+
 Then, navigate to the new folder and take the URL suffix which the API will need to find the folder.
 
 For example, this folder: https://drive.google.com/drive/folders/1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR,
 the suffix is 1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR.
 
-And finally we can use the upload function to use the above Drive sheet to generate metadata entry sheets:
+### Steps 3-6: Generating, tracking, and sharing metadata entry sheets
 
-We can generate empty sheets to send to our collaborators as follows:
+Metadata entry google sheets can be created with empty rows to send to new authors or collaborators to aid in experimental design
+Or they can be created to help collect metadata for experiments that have already been published online.
+<!-- When building an atlas, it can be a lot of work to pre-fill these based on data available online,
+but it may help increase engagement from dataset authors when we request completion. -->
+
+![Metadata Workflow - Steps 3 to 6](/Users/kylekimler/Projects/GCA/graphics/GCA_metadata_workflow_2.png)
+
+#### Step 3: Generating an empty metadata entry google sheet
+Since tier 1 and tier 2 metadata must be collected separately, we create a separate google sheet for each. 
+These google sheets contain the tabs specified in the metadata definitions sheet above. 
 ```{python generate metadata sheets, echo=TRUE}
 folder_id = "1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR"
 
 generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_id, dataset_id = 'Kimler2025')
+```
+
+#### Step 3.2 Generating and pre-filling a google sheet using an existing h5ad file
+
+We can also fill one of these entry metadata sheets using an existing h5ad file. This way, the key columns (sample_id, donor_id, etc) are pre-defined based on the data.
+
+#### Step 4: Determining correctness and completeness of metadata entry
+
+Some mistakes can be easily fixed, while others have to be addressed by authors. 
+Since the google sheets are accessible online, anyone can edit them to help out!
+
+In order to determine how well filled out these google sheets are, we have developed two methods.
+
+1. Determine how complete each metadata field is for each dataset
+2. Determine how correct each metadata field is
+
+In the first, we merely count the number of each sample, donor, celltype per metadata tab that has an entry for each field. 
+These completeness percentages are concatenated into a large dataframe where each column is a metadata field and each row is a dataset. 
+It can then be plotted as a heatmap or with other methods. 
+
+In the second, since dropdown-menu fields are guaranteed to be correct if filled, 
+we use pattern matching for the rest of the fields to determine if the entered values follow HCA requirements and do not contain special characters
+
+
+```{r}
+
 
 ```
 
-Or, we can prefill these sheets based on anndata objects we find online, using a different workflow function
+#### Step 5: Instant feedback for metadata entry completeness
 
-```{python empty chunks, echo=TRUE}
-# adata = sc.read_h5ad('/Users/kylekimler/gitHub/metaManager-HCA/data/pbmc3k_processed.h5ad')
-# adata.obs['dataset_id'] = ['pbmc3k'] * adata.n_obs
-# adata.obs['donor_id'] = np.random.choice(['Donor1', 'Donor2', 'Donor3'], size=adata.n_obs)
-# adata.obs['sample_id'] = np.random.choice(['Sample1', 'Sample2'], size=adata.n_obs)
-# adata.obs['author_cell_type'] = adata.obs['louvain']
-
-# the folder_id is the suffix of the URL:
-# upload_metadata_to_drive(adata, metadata_config, gc, credentials, folder_id)
-```
-
-### Steps 3 to 6: Metadata Handling
-
-These metadata google sheets can be created ad hoc as above or for datasets that already exist.
-When building an atlas, it can be a lot of work to pre-fill these based on data available online,
-but it may help increase engagement from dataset authors when we request completion.
-
-![Metadata Workflow - Steps 3 to 6](/Users/kylekimler/Projects/GCA/graphics/GCA_metadata_workflow_2.png)
-
-### Code for generating and pre-filling a google sheet for an existing dataset
-
-Once these google sheets are created, they can be easily downloaded if they are in a single folder.
-Once we have them, we can create reports that help us determine how well the sheets were filled out.
-
-#### Weekly Reporting
-
-Some mistakes can be easily fixed, while others have to be addressed by authors. Since the google sheets are accessible online, anyone can edit them to help out!
+#### Step 6: Responding to collaborator suggestions and queries
+Using this framework, it is easy to programmatically update existing Google Sheets to contain a new metadata field. 
 
 ### Atlas metrics
 

@@ -1,5 +1,8 @@
+MANIFEST.in
 README.md
 setup.py
+data/metadata_descriptions.csv
+data/pbmc3k_processed.h5ad
 hca_metadata_manager/__init__.py
 hca_metadata_manager/config.py
 hca_metadata_manager/gdrive_config.py
@@ -10,5 +13,8 @@ hca_metadata_manager.egg-info/SOURCES.txt
 hca_metadata_manager.egg-info/dependency_links.txt
 hca_metadata_manager.egg-info/requires.txt
 hca_metadata_manager.egg-info/top_level.txt
+hca_metadata_manager/data/metadata_descriptions.csv
+hca_metadata_manager/data/pbmc3k_processed.h5ad
 tests/__init__.py
 tests/test_utils.py
+tests/test_workflow.py

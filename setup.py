@@ -4,7 +4,10 @@ setup(
     name='hca_metadata_manager',
     version='0.1',
     packages=find_packages(),
-    package_data={'': ['data/*']},  # Include all data files under data/
+    package_data={
+        'hca_metadata_manager': ['data/*.csv'],
+        '': ['data/*.csv'],
+    },
     include_package_data=True,
     install_requires=[
         'gspread',

@@ -31,36 +31,38 @@ def apply_dropdowns(spreadsheet_id, credentials, gc, metadata_dfs=None, num_head
     if manual_config_mode:
         print('Using manual dropdown config mode.')
         # example for manual mode
-        # dropdowns_config = {
-        #     'dataset metadata': {
-        #         'reference_genome': ['GRCh38', 'GRCh37', 'GRCm39', 'GRCm38', 'GRCm37', 'not_applicable'],
-        #         'alignment_software': ['cellranger_3.0', 'starsolo', 'kallisto_bustools_0.1'],
-        #         'intron_inclusion': ['yes', 'no']
-        #     },
-        #     'donor metadata': {
-        #         'organism_ontology_term_id': ['NCBITaxon:9606'],  # Human
-        #         'manner_of_death': ['not_applicable', 'unknown', '0', '1', '2', '3', '4'],
-        #         'sex_ontology_term_id': ['PATO:0000383', 'PATO:0000384']  # Female, Male
-        #     },
-        #     'sample metadata': {
-        #         'tissue_ontology_term': ['duodenum', 'jejunum', 'ileum', 'ascending_colon', 'transverse_colon', 'descending_colon',
-        #                                  'sigmoid_colon', 'rectum', 'anal_canal', 'small_intestine', 'colon', 'caecum',
-        #                                  'gastrointestinal_system_mesentery', 'vermiform_appendix'],
-        #         'sample_source': ["surgical_donor", "postmortem_donor", "organ_donor"],
-        #         'sample_collection_method': ['biopsy', 'surgical_resection', 'brush'],
-        #         'tissue_type': ["tissue", "organoid", "cell_culture"],
-        #         'sampled_site_condition': ["healthy", "diseased", "adjacent"],
-        #         'sample_preservation_method': ['fresh', 'frozen'],
-        #         'suspension_type': ['cell', 'nucleus', 'na'],
-        #         'is_primary_data': ['FALSE', 'TRUE']
-        #     },
+        dropdowns_config = {
+            'dataset metadata': {
+                'reference_genome': ['GRCh38', 'GRCh37', 'GRCm39', 'GRCm38', 'GRCm37', 'not_applicable'],
+                'alignment_software': ['cellranger_3.0', 'starsolo', 'kallisto_bustools_0.1'],
+                'intron_inclusion': ['yes', 'no']
+            },
+            'donor metadata': {
+                'organism_ontology_term_id': ['NCBITaxon:9606'],  # Human
+                'manner_of_death': ['not_applicable', 'unknown', 0, 1, 2, 3, 4],
+                'sex_ontology_term_id': ['PATO:0000383', 'PATO:0000384']  # Female, Male
+            },
+            'sample metadata': {
+                'tissue_ontology_term': ['duodenum', 'jejunum', 'ileum', 'ascending_colon', 'transverse_colon', 'descending_colon',
+                                         'sigmoid_colon', 'rectum', 'anal_canal', 'small_intestine', 'colon', 'caecum',
+                                         'gastrointestinal_system_mesentery', 'vermiform_appendix'],
+                'sample_source': ["surgical_donor", "postmortem_donor", "organ_donor"],
+                'sample_collection_method': ['biopsy', 'surgical_resection', 'brush'],
+                'tissue_type': ["tissue", "organoid", "cell_culture"],
+                'sampled_site_condition': ["healthy", "diseased", "adjacent"],
+                'sample_preservation_method': ['fresh', 'frozen'],
+                'suspension_type': ['cell', 'nucleus', 'na'],
+                'is_primary_data': ['FALSE', 'TRUE']
+            },
+        }
         #     'celltype': {
         #         ''
         #     }
         # }
     else:
         for sheet_title, df in metadata_dfs.items():
-            dropdowns_config[sheet_title.lower()] = {col: df[col].dropna().unique().tolist() for col in df.columns if not df[col].isnull().all()}
+            valid_rows = df.iloc[num_header_rows:]
+            dropdowns_config[sheet_title.lower()] = {col: valid_rows[col].dropna().unique().tolist() for col in df.columns if not valid_rows[col].isnull().all()}
 
     # Apply dropdowns using the fetched sheet information
     for sheet_index, sheet_title in sheets_info.items():
@@ -70,9 +72,7 @@ def apply_dropdowns(spreadsheet_id, credentials, gc, metadata_dfs=None, num_head
             try:
                 col_index = get_column_index(spreadsheet_id, sheet_index, column_name, credentials)
                 if col_index >= 0:
-                    # Calculate the range to apply dropdowns, adjusting for header rows
-                    dropdown_range = f"{col_index}{num_header_rows+1}:{col_index}"
-                    set_dropdown_list_by_id(spreadsheet_id, sheet_index, dropdown_range, values, credentials)
+                    set_dropdown_list_by_id(spreadsheet_id, sheet_index, col_index, num_header_rows, values, credentials)
                 else:
                     print(f"Column {column_name} not found in {sheet_title}.")
             except ValueError as e:
@@ -186,50 +186,96 @@ def upload_metadata_to_drive(adata, metadata_config, gc, credentials, folder_id)
                 print("Sheet1 does not exist or was already deleted.")
             # Apply dropdowns
             apply_dropdowns(file_id, credentials, gc, metadata_dfs=metadata_dfs, num_header_rows=5)
+            format_all_sheets(file_id, credentials)
             # Move the sheet to the designated Google Drive folder
             move_sheet_in_drive(file_id, folder_id, credentials)
             # Sleep to avoid hitting API rate limits
             sleep(15)
 
-def generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_id, dataset_id, num_header_rows=5):
+def generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_id, dataset_id, num_header_rows=1):
     """
-    Create Google Sheets for Tier 1 and Tier 2 metadata without input from an AnnData object.
+    Create Google Sheets for Tier 1 and Tier 2 metadata without input from an AnnData object,
+    including only the header rows.
 
     Args:
         metadata_dfs: Dictionary of DataFrames loaded from a predefined metadata definitions sheet.
         gc: Google Sheets client authorized with the gspread library.
         credentials: Google API credentials.
         folder_id: Google Drive folder ID where the sheets should be moved.
+        dataset_id: Identifier for the dataset, used in naming the sheets.
+        num_header_rows: Number of header rows to include in the sheet.
     """
     dataset_id = dataset_id  # Static dataset ID as requested
 
     # Define the tiers and associated tabs
     tiers = {
-        'Tier 1': ['Tier 1 Dataset Metadata', 'Tier 1 Donor Metadata', 'Tier 1 Sample Metadata'],
-        'Tier 2': ['Tier 2 Donor Metadata', 'Tier 2 Sample Metadata']
+        'Tier 1': ['Tier 1 Dataset Metadata', 'Tier 1 Donor Metadata', 'Tier 1 Sample Metadata', 'Tier 2 Celltype Metadata'],
+        'Tier 2': ['Tier 2 Dataset Metadata', 'Tier 2 Donor Metadata', 'Tier 2 Sample Metadata']
     }
 
     for tier, tabs in tiers.items():
         SHEET_NAME = f"{dataset_id}_HCA_{tier.lower()}_metadata"
         spreadsheet = gc.create(SHEET_NAME)
         file_id = spreadsheet.id
-
+        debug_print("Created spreadsheet with ID", file_id)
         for tab in tabs:
             tab_name = tab.replace('Tier 1 ', '').replace('Tier 2 ', '')
+            debug_print("Processing tab", tab_name)
             if tab in metadata_dfs:
                 metadata_tb = metadata_dfs[tab]
-                # Ensure the DataFrame has at least `num_header_rows` rows for dropdown application
-                while len(metadata_tb) < num_header_rows:
+                debug_print("Initial metadata table", metadata_tb.head())
+                if len(metadata_tb) > num_header_rows:
+                    metadata_tb = metadata_tb.iloc[:num_header_rows].copy()
+                debug_print("Metadata table after trimming", metadata_tb)
+                while len(metadata_tb) < num_header_rows + 10:
                     metadata_tb = pd.concat([metadata_tb, pd.DataFrame([{}])], ignore_index=True)
                 upload_to_sheet(metadata_tb, gc, file_id, tab_name)
             else:
-                print(f"Missing metadata for {tab}")
-
+                print(f"Missing metadata for {tab}")    
         try:
             delete_sheet(file_id, "Sheet1", gc)
         except gspread.exceptions.WorksheetNotFound:
             print("Sheet1 does not exist or was already deleted.")
+        format_all_sheets(file_id, credentials)
+        apply_dropdowns(file_id, credentials, gc, metadata_dfs=metadata_dfs, num_header_rows=5)
+        move_sheet_in_drive(file_id, folder_id, credentials)
 
+
+# Helper function for debugging
+def debug_print(msg, var):
+    print(f"{msg}: {var}")
+
+def debug_generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_id, dataset_id, num_header_rows=1):
+    debug_print("Starting to generate empty metadata entry sheets", "")
+    dataset_id = dataset_id  # Static dataset ID
+    tiers = {
+        'Tier 1': ['Tier 1 Dataset Metadata', 'Tier 1 Donor Metadata', 'Tier 1 Sample Metadata', 'Tier 2 Celltype Metadata'],
+        'Tier 2': ['Tier 2 Dataset Metadata', 'Tier 2 Donor Metadata', 'Tier 2 Sample Metadata']
+    }
+    for tier, tabs in tiers.items():
+        SHEET_NAME = f"{dataset_id}_HCA_{tier.lower()}_metadata"
+        spreadsheet = gc.create(SHEET_NAME)
+        file_id = spreadsheet.id
+        debug_print("Created spreadsheet with ID", file_id)
+        for tab in tabs:
+            tab_name = tab.replace('Tier 1 ', '').replace('Tier 2 ', '')
+            debug_print("Processing tab", tab_name)
+            if tab in metadata_dfs:
+                metadata_tb = metadata_dfs[tab]
+                debug_print("Initial metadata table", metadata_tb.head())
+                if len(metadata_tb) > num_header_rows:
+                    metadata_tb = metadata_tb.iloc[:num_header_rows].copy()
+                debug_print("Metadata table after trimming", metadata_tb)
+                while len(metadata_tb) < num_header_rows + 10:
+                    metadata_tb = pd.concat([metadata_tb, pd.DataFrame([{}])], ignore_index=True)
+                upload_to_sheet(metadata_tb, gc, file_id, tab_name)
+            else:
+                print(f"Missing metadata for {tab}")    
+        try:
+            delete_sheet(file_id, "Sheet1", gc)
+        except gspread.exceptions.WorksheetNotFound:
+            print("Sheet1 does not exist or was already deleted.")
+        format_all_sheets(file_id, credentials)
         apply_dropdowns(file_id, credentials, gc, metadata_dfs=metadata_dfs, num_header_rows=5)
         move_sheet_in_drive(file_id, folder_id, credentials)
         sleep(15)

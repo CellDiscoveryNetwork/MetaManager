@@ -13,6 +13,16 @@ from .config import authenticate_with_google
 import pandas as pd
 import pkg_resources
 
+def convert_numeric_to_string(data):
+    if isinstance(data, dict):
+        return {k: convert_numeric_to_string(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [convert_numeric_to_string(item) for item in data]
+    elif isinstance(data, (int, float)):  # Targeting only numeric types
+        return str(data)
+    else:
+        return data
+
 def initialize_google_sheets():
     """
     Initializes and returns a Google Sheets client authorized with OAuth2 credentials.
@@ -64,6 +74,26 @@ def upload_to_sheet(df, gc, spreadsheet_id, title):
     worksheet.update(values_to_upload)  # Update worksheet with new values
 
     return spreadsheet
+
+def add_empty_rows(spreadsheet_id, gc, num_rows):
+    """
+    Add rows to the Google Sheet specified by the spreadsheet_id.
+
+    Args:
+        spreadsheet_id (str): The ID of the Google Sheet.
+        gc (gspread.client.Client): An authorized Google Sheets client instance.
+        num_rows (int): Number of rows to add.
+    """
+    spreadsheet = gc.open_by_key(spreadsheet_id)
+    requests = [{
+        "appendCells": {
+            "sheetId": 0,  # Assuming you're working with the first sheet
+            "rows": [{"values": [{} for _ in range(num_rows)]}],
+            "fields": "userEnteredValue"
+        }
+    }]
+    
+    spreadsheet.batch_update({'requests': requests})
 
 def delete_sheet(spreadsheet_id, sheet_title, gc):
     """
@@ -465,6 +495,101 @@ def get_column_index(spreadsheet_id, sheet_index, column_name, credentials):
         print(f"Failed to retrieve or parse headers: {str(e)}")
         return None
 
+def get_column_index(spreadsheet_id, sheet_index, column_name, credentials, column_cache):
+    """
+    Retrieve the column index for a given column name in a specific sheet, using cache.
+
+    Args:
+    spreadsheet_id (str): The ID of the spreadsheet.
+    sheet_index (int): The index of the sheet within the spreadsheet.
+    column_name (str): The name of the column to find.
+    credentials: Google API credentials.
+    column_cache: A dictionary to cache column indices.
+
+    Returns:
+    int: The 0-based index of the column, or -1 if not found.
+    """
+    # Check cache first
+    cache_key = (spreadsheet_id, sheet_index, column_name.lower())
+    if cache_key in column_cache:
+        return column_cache[cache_key]
+
+    service = build('sheets', 'v4', credentials=credentials)
+    
+    # Fetch all sheets to get the title for the specified index
+    try:
+        sheet_title = [sheet['properties']['title'] for sheet in service.spreadsheets().get(
+            spreadsheetId=spreadsheet_id, fields='sheets(properties)').execute().get('sheets', [])
+            if sheet['properties']['index'] == sheet_index][0]
+
+        # Use the sheet title to specify the range in A1 notation
+        range_name = f"'{sheet_title}'!1:1"
+        result = service.spreadsheets().values().get(
+            spreadsheetId=spreadsheet_id, range=range_name).execute()
+        headers = result.get('values', [[]])[0]
+
+        if column_name in headers:
+            column_index = headers.index(column_name)
+            column_cache[cache_key] = column_index
+            return column_index
+    except Exception as e:
+        print(f"Failed to retrieve or parse headers: {str(e)}")
+    return -1  # or handle the error differently
+
+def cache_column_indices(spreadsheet_id, credentials):
+    service = build('sheets', 'v4', credentials=credentials)
+    # Fetch sheet titles and ids
+    sheet_metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id, fields='sheets(properties)').execute()
+    sheets = sheet_metadata.get('sheets', [])
+    
+    column_cache = {}
+    for sheet in sheets:
+        title = sheet['properties']['title']
+        index = sheet['properties']['index']
+        range_name = f"'{title}'!1:1"
+        result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
+        headers = result.get('values', [[]])[0]
+        
+        # Map each column name to its index in this sheet
+        column_cache[index] = {header.lower(): idx for idx, header in enumerate(headers)}
+    
+    return column_cache
+
+def get_column_index(sheet_index, column_name, column_cache):
+    """
+    Retrieve the column index using the pre-fetched cache.
+    """
+    column_name = column_name.lower()
+    if sheet_index in column_cache and column_name in column_cache[sheet_index]:
+        return column_cache[sheet_index][column_name]
+    else:
+        return -1  # Column name not found
+
+
+def cache_sheet_columns(spreadsheet_id, credentials):
+    """
+    Cache column headers for each sheet to minimize API calls.
+    Returns a dictionary with sheet titles as keys and another dictionary as values, mapping column names to indices.
+    """
+    service = build('sheets', 'v4', credentials=credentials)
+    sheets_headers = {}
+    try:
+        # Fetch metadata for all sheets to get their titles
+        response = service.spreadsheets().get(spreadsheetId=spreadsheet_id, fields='sheets(properties)').execute()
+        sheets = response.get('sheets', [])
+        for sheet in sheets:
+            sheet_title = sheet['properties']['title']
+            range_name = f"'{sheet_title}'!1:1"  # Adjust if headers are not in the first row
+            # Fetch headers for each sheet
+            result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
+            headers = result.get('values', [[]])[0]
+            # Map column names to their indices
+            sheets_headers[sheet_title] = {header: idx for idx, header in enumerate(headers)}
+    except Exception as e:
+        print(f"Failed to cache headers: {str(e)}")
+    return sheets_headers
+
+
 # def fetch_sheets_list(spreadsheet_id, credentials):
 #     service = build('sheets', 'v4', credentials=credentials)
 #     sheet_metadata = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
@@ -516,7 +641,7 @@ def set_dropdown_list(spreadsheet_id, sheet_title, column_index, values, gc, cre
     response = spreadsheet.batch_update(body)
     return response
 
-def set_dropdown_list_by_id(spreadsheet_id, sheet_index, column_index, values, credentials):
+def set_dropdown_list_by_id_old(spreadsheet_id, sheet_index, column_index, num_header_rows, values, credentials):
     """
     Apply data validation dropdown list to a specified column in a Google Sheet.
 
@@ -547,7 +672,7 @@ def set_dropdown_list_by_id(spreadsheet_id, sheet_index, column_index, values, c
         "setDataValidation": {
             "range": {
                 "sheetId": sheet_id,
-                "startRowIndex": 4,  # Starting from row 6 in the sheet
+                "startRowIndex": num_header_rows-1,  # Starting from row 6 in the sheet
                 "endRowIndex": max_rows, 
                 "startColumnIndex": column_index,
                 "endColumnIndex": column_index + 1
@@ -568,6 +693,46 @@ def set_dropdown_list_by_id(spreadsheet_id, sheet_index, column_index, values, c
     body = {"requests": requests}
     response = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
     return response
+
+def set_dropdown_list_by_id(spreadsheet_id, sheet_index, column_index, num_header_rows, values, credentials, sheet_properties_cache):
+    """
+    Apply data validation dropdown list to a specified column in a Google Sheet using cached properties.
+    """
+    if sheet_index not in sheet_properties_cache:
+        raise ValueError(f"Sheet ID not found for index {sheet_index}")
+    sheet_id, max_rows = sheet_properties_cache[sheet_index]
+    # Initialize Google Sheets API service
+    service = build('sheets', 'v4', credentials=credentials)
+    # Prepare the request body for setting data validation
+    requests = [{
+        "setDataValidation": {
+            "range": {
+                "sheetId": sheet_id,
+                "startRowIndex": num_header_rows,  # Adjust for zero-based index by API
+                "endRowIndex": max_rows, 
+                "startColumnIndex": column_index,
+                "endColumnIndex": column_index + 1
+            },
+            "rule": {
+                "condition": {
+                    "type": "ONE_OF_LIST",
+                    "values": [{"userEnteredValue": val} for val in values]
+                },
+                "inputMessage": "Select from the list",
+                "strict": True,
+                "showCustomUi": True
+            }
+        }
+    }]
+    # Send the batch update request to the Sheets API
+    body = {"requests": requests}
+    try:
+        response = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
+        print(f"Dropdowns set successfully for sheet ID {sheet_id} at column index {column_index}")
+    except Exception as e:
+        print(f"Failed to set dropdowns: {str(e)}")
+    return response
+
 
 def fetch_sheet_id_from_index(spreadsheet_id, sheet_index, credentials):
     """
@@ -590,6 +755,27 @@ def fetch_sheet_id_from_index(spreadsheet_id, sheet_index, credentials):
             return sheet['properties']['sheetId']
     
     return None
+
+def cache_sheet_properties(spreadsheet_id, credentials):
+    """
+    Cache sheet properties including sheet IDs, their indexes, and row counts to minimize API calls.
+    Returns a dictionary with sheet indexes as keys and a tuple of (sheet ID, row count) as values.
+    """
+    service = build('sheets', 'v4', credentials=credentials)
+    sheet_properties_cache = {}
+    try:
+        # Fetch metadata for all sheets to get their indexes and IDs
+        response = service.spreadsheets().get(spreadsheetId=spreadsheet_id, fields='sheets(properties)').execute()
+        sheets = response.get('sheets', [])
+        for sheet in sheets:
+            sheet_index = sheet['properties']['index']
+            sheet_id = sheet['properties']['sheetId']
+            row_count = sheet['properties'].get('gridProperties', {}).get('rowCount', 1000)
+            sheet_properties_cache[sheet_index] = (sheet_id, row_count)
+    except Exception as e:
+        print(f"Failed to cache sheet properties: {str(e)}")
+    return sheet_properties_cache
+
 
 def concatenate_metadata(descriptions, metadata_tb):
     shared_cols = descriptions.columns.intersection(metadata_tb.columns)
@@ -614,18 +800,23 @@ def move_sheet_in_drive(file_id, folder_id, credentials):
                                  removeParents=previous_parents,
                                  fields='id, parents').execute()
     
-def load_descriptions():
+def load_descriptions(csv_path=None):
     """
-    Load descriptions from a CSV file located in the 'data/' directory of the repository.
+    Load descriptions from a CSV file. If no path is provided, load from a default location.
+    Args:
+        csv_path (str, optional): Path to the CSV file containing descriptions.
+    Returns:
+        DataFrame: Loaded descriptions from the CSV file.
     """
-    # The resource_filename function takes the package name and relative path to the file
-    resource_path = pkg_resources.resource_filename('your_package_name', 'data/metadata_descriptions.csv')
-    
+    if csv_path is None:
+        # The resource_filename function takes the package name and relative path to the file
+        csv_path = pkg_resources.resource_filename('hca_metadata_manager', 'data/metadata_descriptions.csv')
+        print("Loading descriptions from:", csv_path)
     # Load the descriptions CSV
-    descriptions = pd.read_csv(resource_path, index_col=0)
+    descriptions = pd.read_csv(csv_path, index_col=0)
     return descriptions
 
-def add_metadata_descriptions(metadata_dfs):
+def add_metadata_descriptions(metadata_dfs, descriptions_csv=None):
     """
     Combine metadata definitions with descriptions to prepare for upload.
 
@@ -636,7 +827,7 @@ def add_metadata_descriptions(metadata_dfs):
         A dictionary with the combined data ready for upload.
     """
     # Load descriptions
-    descriptions = pd.read_csv('data/metadata_descriptions.csv', index_col=0)
+    descriptions = load_descriptions(csv_path=descriptions_csv)
     updated_dfs = {}  # Dictionary to store updated DataFrames
     # Process each metadata DataFrame
     for tab_name, metadata_df in metadata_dfs.items():
