@@ -6,12 +6,12 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 import googleapiclient.discovery
 from googleapiclient.discovery import build
-import os
 import traceback
 from .gdrive_config import GOOGLE_API_CONFIG, authenticate_with_google
 from .config import authenticate_with_google
 import pandas as pd
 import pkg_resources
+import time
 
 def convert_numeric_to_string(data):
     if isinstance(data, dict):
@@ -402,7 +402,7 @@ def format_all_sheets(spreadsheet_id, credentials):
     # Execute the batch update
     body = {"requests": requests}
     response = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
-    print(f"Formatted {len(sheets)} sheets with response: {response}")
+    print(f"Formatting {len(sheets)} sheets")
 
 def get_sheet_title_from_id(spreadsheet_id, sheet_id, credentials):
     """
@@ -705,14 +705,14 @@ def set_dropdown_list_by_id(spreadsheet_id, sheet_index, column_index, num_heade
     service = build('sheets', 'v4', credentials=credentials)
     # Check if there are meaningful values to add in the dropdown
     if not values or (len(values) == 1 and values[0] == ""):
-        print(f"No valid dropdown values to set for column index {column_index} in sheet index {sheet_index}.")
+        # print(f"No valid dropdown values to set for column index {column_index} in sheet index {sheet_index}.")
         return None  # Exit if no valid values
     # Prepare the request body for setting data validation
     requests = [{
         "setDataValidation": {
             "range": {
                 "sheetId": sheet_id,
-                "startRowIndex": num_header_rows,  # Adjust for zero-based index by API
+                "startRowIndex": num_header_rows - 1,  # Adjust for zero-based index by API
                 "endRowIndex": max_rows, 
                 "startColumnIndex": column_index,
                 "endColumnIndex": column_index + 1
@@ -732,7 +732,7 @@ def set_dropdown_list_by_id(spreadsheet_id, sheet_index, column_index, num_heade
     body = {"requests": requests}
     try:
         response = service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
-        print(f"Dropdowns set successfully for sheet ID {sheet_id} at column index {column_index}")
+        # print(f"Dropdowns set successfully for sheet ID {sheet_id} at column index {column_index}")
     except Exception as e:
         print(f"Failed to set dropdowns: {str(e)}")
     return response
@@ -847,3 +847,60 @@ def add_metadata_descriptions(metadata_dfs, descriptions_csv=None):
         # Store the updated DataFrame in the dictionary
         updated_dfs[tab_name] = combined_df
     return updated_dfs
+
+def load_sheets_metadata(credentials, googlesheets):
+    spreadsheet_ids = []
+    for goo in googlesheets:
+        spreadsheet_ids.append(goo['id'])
+
+    service = build('sheets', 'v4', credentials=credentials)
+    all_dfs = {}  # Dictionary to store dataframes for each metadata type
+
+    for spreadsheet_id in spreadsheet_ids:
+        print(f'Loading data from Spreadsheet ID: {spreadsheet_id}')
+        spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+        sheets = spreadsheet.get('sheets', [])
+
+        for sheet in sheets:
+            title = sheet['properties']['title']
+            if 'metadata' in title.lower():
+                # First retrieve only the first row to count non-empty columns
+                first_row_range = f'{title}!1:1'
+                first_row_result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=first_row_range).execute()
+                first_row_values = first_row_result.get('values', [])
+                
+                if first_row_values:
+                    # Count non-empty columns in the first row
+                    non_empty_columns = len(first_row_values[0])
+                    last_column_letter = column_to_gsheet_letter(non_empty_columns)
+                    range_name = f'{title}!A:{last_column_letter}'
+                    
+                    # Retrieve the full range with the correct number of columns
+                    result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
+                    rows = result.get('values', [])
+                    if rows:
+                        headers = rows.pop(0)
+                        adjusted_rows = [row + [None] * (len(headers) - len(row)) for row in rows[4:]]
+                        df_temp = pd.DataFrame(adjusted_rows, columns=headers)
+                        df_temp['worksheet'] = spreadsheet['properties']['title'].split(" ")[0]
+                        
+                        metadata_type = title.lower().split('metadata')[0].strip()
+                        if metadata_type in all_dfs:
+                            all_dfs[metadata_type] = pd.concat([all_dfs[metadata_type], df_temp], ignore_index=True)
+                        else:
+                            all_dfs[metadata_type] = df_temp
+
+        # Throttle the speed of API calls to avoid exceeding limit
+        time.sleep(15)
+
+    return all_dfs
+
+def column_to_gsheet_letter(column_number):
+    """
+    Convert a column number (1-indexed) to a column letter, as used in Excel or Google Sheets.
+    """
+    letter = ''
+    while column_number > 0:
+        column_number, remainder = divmod(column_number - 1, 26)
+        letter = chr(65 + remainder) + letter
+    return letter

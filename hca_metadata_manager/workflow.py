@@ -54,7 +54,6 @@ def apply_dropdowns(spreadsheet_id, credentials, gc,
         for sheet_title, df in metadata_dfs.items():
             valid_rows = df.iloc[num_header_rows:]
             dropdowns_config[sheet_title.lower()] = {col: valid_rows[col].dropna().unique().tolist() for col in df.columns if not valid_rows[col].isnull().all()}
-            print(f"Configured dropdowns for '{sheet_title}': {dropdowns_config[sheet_title.lower()]}")
     dropdowns_config = convert_numeric_to_string(dropdowns_config)
     # Apply dropdowns using the fetched sheet information
     for sheet_index, sheet_title in sheets_info.items():
@@ -176,7 +175,8 @@ def upload_metadata_to_drive(adata, metadata_config, gc, credentials, folder_id)
             try:
                 delete_sheet(file_id, "Sheet1", gc)
             except gspread.exceptions.WorksheetNotFound:
-                print("Sheet1 does not exist or was already deleted.")
+                pass
+                # print("Sheet1 does not exist or was already deleted.")
             # Apply dropdowns
             apply_dropdowns(file_id, credentials, gc, metadata_dfs=metadata_dfs, num_header_rows=5)
             format_all_sheets(file_id, credentials)

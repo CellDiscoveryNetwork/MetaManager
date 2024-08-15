@@ -20,7 +20,8 @@ pip install -e .
 ```
 
 ## Usage
-
+We wrote a blog post on the CDN website with a code tutorial for how to use this. The code for the tutorial is here, in docs/metadata_collection_vignette.rmd
+You can also see the tutorial on the github page: https://kylekimler.github.io/MetaManager-HCA/metadata_collection_vignette.html
 
 ## Contributing
 Reach out to kkimler@broadinstitute.org or any champions of HCA Bionetworks' integrated atlas projects to contribute!

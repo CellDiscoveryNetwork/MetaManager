@@ -6,6 +6,7 @@ data/pbmc3k_processed.h5ad
 hca_metadata_manager/__init__.py
 hca_metadata_manager/config.py
 hca_metadata_manager/gdrive_config.py
+hca_metadata_manager/plots.py
 hca_metadata_manager/utils.py
 hca_metadata_manager/workflow.py
 hca_metadata_manager.egg-info/PKG-INFO
