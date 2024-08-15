@@ -59,7 +59,7 @@ www.github.com/kylekimler/gdrive_api_extension.py
 
 The HCA metadata schema is downloaded as a csv and used to display descriptions of each field at the top of the sheets.
 
-First, set up and obtain the python code at: https://github.com/kylekimler/MetaManager-HCA
+First, download and install the python code at: https://github.com/kylekimler/MetaManager-HCA
 
 #### Step 1: Loading the metadata definitions Google Sheets
 ```{python set up libraries, echo=TRUE}
@@ -70,6 +70,7 @@ from hca_metadata_manager.plots import *
 
 import re
 import pandas as pd
+import seaborn as sns
 # import scanpy as sc
 ```
 
@@ -322,6 +323,8 @@ permitted_patterns_dict = {
 
 Finally, using these terms and some library functions, we can create correctness plots
 ```{python, echo=TRUE}
+sns.set(font_scale=2)
+
 for metadata_type, df in metadata.items():
     correctness_df = calculate_correctness_per_group(df, permitted_values_dict, permitted_patterns_dict)
     plot_correctness_heatmap(correctness_df.T, f'{metadata_type.capitalize()} Metadata Correctness')  # Transpose for x-axis as fields
@@ -338,7 +341,7 @@ Just upload it to a google bucket (usually best to create a new one) and give th
 Our google bucket is called "hca_gut_cell_atlas".
 
 Then, run the following:
-```{bash, include=FALSE, echo=TRUE}
+```{bash, evaluate=FALSE, echo=TRUE}
 gsutil web set -m metadata_correctness.html gs://hca_gut_cell_atlas
 ```
 

@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import re
 import pandas as pd
+import numpy as np
 
 def check_completeness(df, ignore_values=None):
     """
@@ -197,7 +198,7 @@ def calculate_correctness_per_group(df, permitted_values, permitted_patterns, gr
 
 def plot_correctness_heatmap(correctness_df, title):
     plt.figure(figsize=(12, 8))
-    sns.heatmap(correctness_df, annot=True, fmt=".1f", cmap='viridis', linewidths=.5)
+    sns.heatmap(correctness_df, annot=True, fmt=".1f", cmap='viridis', linewidths=.5, annot_kws={"size": 35 / np.sqrt(len(correctness_df))},)
     plt.title(title)
     plt.xticks(rotation=45)
     plt.yticks(rotation=0)
