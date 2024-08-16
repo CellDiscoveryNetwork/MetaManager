@@ -52,7 +52,7 @@ def apply_dropdowns(spreadsheet_id, credentials, gc,
     else:
         print("Automatically configuring dropdowns based on metadata definitions.")
         for sheet_title, df in metadata_dfs.items():
-            valid_rows = df.iloc[num_header_rows:]
+            valid_rows = df.iloc[num_header_rows-2:]
             dropdowns_config[sheet_title.lower()] = {col: valid_rows[col].dropna().unique().tolist() for col in df.columns if not valid_rows[col].isnull().all()}
     dropdowns_config = convert_numeric_to_string(dropdowns_config)
     # Apply dropdowns using the fetched sheet information

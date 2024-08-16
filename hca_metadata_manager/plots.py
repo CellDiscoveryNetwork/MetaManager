@@ -200,9 +200,9 @@ def plot_correctness_heatmap(correctness_df, title):
     correctness_df = correctness_df.round().astype(int)
     plt.figure(figsize=(12, 8))
     # Calculate annotation font size dynamically, smaller dataframe -> larger font
-    annot_kws = {"size": max(10, 35 / np.sqrt(len(correctness_df)))}
+    # annot_kws = {"size": max(6, 35 / np.sqrt(len(correctness_df)))}
     # Create heatmap with adjusted annotation
-    ax = sns.heatmap(correctness_df, annot=True, fmt="d", 
+    ax = sns.heatmap(correctness_df, annot=False, fmt="d", 
                      cmap='viridis', linewidths=.5, 
                     #  annot_kws=annot_kws,
                      cbar_kws={'label': 'Percent of Field Correctly Filled'})
