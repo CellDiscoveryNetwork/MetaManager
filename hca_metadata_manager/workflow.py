@@ -157,7 +157,7 @@ def upload_metadata_to_drive(adata, metadata_config, gc, credentials, folder_id)
 
         # Define tiers and associated metadata types
         tiers = {
-            'Tier 1': ['Dataset', 'Donor', 'Sample', 'CellType'],
+            'Tier 1': ['Dataset', 'Donor', 'Sample', 'Celltype'],
             'Tier 2': ['Donor', 'Sample']
         }
         # Process each tier
@@ -189,7 +189,7 @@ def generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_i
     dataset_id = dataset_id  # Static dataset ID
     # configure your tier 1 and 2 tabs here
     tiers = {
-        'Tier 1': ['Tier 1 Dataset Metadata', 'Tier 1 Donor Metadata', 'Tier 1 Sample Metadata', 'Tier 2 Celltype Metadata'],
+        'Tier 1': ['Tier 1 Dataset Metadata', 'Tier 1 Donor Metadata', 'Tier 1 Sample Metadata', 'Tier 1 Celltype Metadata'],
         'Tier 2': ['Tier 2 Dataset Metadata', 'Tier 2 Donor Metadata', 'Tier 2 Sample Metadata']
     }
     # and configure what they will be called in the empty sheets

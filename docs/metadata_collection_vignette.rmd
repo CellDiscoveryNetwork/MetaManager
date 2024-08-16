@@ -27,41 +27,64 @@ When reaching out, providing a standardized metadata sheet can help skip redunda
 In this vignette, I will demonstrate methods for collecting and harmonizing metadata for human single-cell experiments on an atlas level using Google Sheets.
 We use this collection process in the HCA integrated gut cell atlas project.
 
-## Workflow Overview
+## Design of Metadata
+
+The HCA provides a required metadata schema that also includes metadata fields required by CELLxGENE. The HCA metadata guidelines can be quite confusing [https://data.humancellatlas.org/metadata].
+Essentially, these follow similar guidelines to CELLxGENE, which is more simply detailed here [https://cellxgene.cziscience.com/docs/032__Contribute%20and%20Publish%20Data] in terms of single-cell data analysis.
+We adhere to this schema to make dataset upload to the portals easier. The following portals increase public data accessibility and offer unique methods.
+
+- (CELLxgene)[https://cellxgene.cziscience.com/]: A highly optimized/efficient app for working with single-cell data
+- (HCA)[https://data.humancellatlas.org/]: A platform for storing data for use in meta-atlases
+- (CAP)[https://celltype.info]: An analysis app similar to CELLxGENE with a focus on crowd-sourcing celltype annotations
+
+The metadata schema used by these platforms has several useful delineations - one is separation of patient-protected and tissue-specific metadata fields from common-to-all human experiments metadata fields.
+HCA terms these "Tier 1" and "Tier 2" metadata, respectively. 
+
+Some fields in the schema are coded according to standards decided by large international bioinformatic consortia like the EBI ontology Service [https://www.ebi.ac.uk/ols4/],
+These are outlined on the metadata schema above, while others accept free text. 
+
+In this vignette, we will create separate google sheets for defining and collecting tier 1 (common and public) and tier 2 (patient-protected and tissue-specific) metadata.
+These two metadata tiers should be collected separately. Tier 1 can be collected rapidly to make the datasets more accessible,
+while Tier 2 metadata should be carefully considered by the project team and collected via secure channels. 
+
+In steps 1 and 2, the metadata DEFINITIONS file (in gold in the workflow image) is created ONCE for a meta-analysis or experimental project,
+then in steps 3 to 5, the metadata ENTRY files (in green) can be created and updated iteratively to collect the actual metadata.
+
+# Steps 1 and 2: Defining Metadata
 
 The first step in the metadata management process is to create rigid definitions for the metadata. 
 
-It is crucial to be as comprehensive as possible before we begin collecting data, 
-while allowing ourselves the possibility of adding or editing fields down the line.
+It is important to be as comprehensive as possible before we begin collecting data, 
+while allowing ourselves the possibility of adding or editing fields down the line. 
+We can do both by creating a google sheet where metadata are defined and allowed entries for each are listed. 
+The google sheet format allows for collaborative editing, and rigid definitions make downstream analysis much easier.
 
-### Steps 1 and 2: Defining Metadata
-
-The HCA provides a required metadata schema that also includes metadata fields required by CELLxGENE. 
-We adhere to this schema to make dataset upload to the portals easier. Any datasets that adhere can be uploaded to CELLxGENE and CAP, increasing accessibilty of these datasets to help them reach a wider audience.
-The CELLxGENE-required and many HCA-recommended fields are termed "Tier 1 metadata", and do not include any patient-protected data. 
-"Tier 2 metadata" includes all patient-protected data necessary for the analysis as well as project-specific metadata fields, in this case the fields specific to the gut atlas project.
-These two metadata tiers should be collected separately. Tier 1 can be collected rapidly to make the datasets more accessible,
-while Tier 2 metadata should be carefully considered by the project team and collected via secure channels.
-
-Most metadata fields have some restrictions to what values can be entered. 
+Beyond codes and ontology schema, most metadata fields can be standardized to some degree.
 For example, fields like "manner_of_death" are coded to fit a standard, 
-others like "development_stage_ontology_term_id" must adhere to a 10-year age range,
-while others like "library_id" must follow a certain pattern - i.e. a string with no special characters.
+others like "development_stage_ontology_term_id" must adhere to a 10-year age range in tier 1 metadata to avoid identification,
+while others like "library_id" must follow a certain pattern like a string with no special characters.
 
-First, we create a google sheet to define metadata fields and allowed values for each metadata field, which is shared and filled out by experimenters and those doing the analysis. 
+First, we create a google sheet to define metadata fields and allowed values for each metadata field, 
+which is shared, discussed, and filled out by experimentalists and those doing the analysis. 
 
-![Metadata Workflow - Steps 1 and 2](/Users/kylekimler/gitHub/metaManager-HCA/docs/GCA_metadata_workflow_1.png)
+For this workflow, this Google Sheet should contain 
+- several tabs, one for each type of metadata - we typically use "dataset", "donor", "sample", and "celltype". 
+- a special "key" column in the first column of each tab, "dataset_id", "donor_id", "sample_id", "author_cell_type". We should also include dataset_id and donor_id in the "sample" tab.
+- names of metadata fields which have unique values per key as column headers
 
-Next, this google sheet is used to format two metadata entry google sheets per dataset, tier 1 and tier 2, which can then be sent to authors or used for new experiments. 
+(Example Metadata Definitions Sheet)[https://docs.google.com/spreadsheets/d/1Jz02P7ZnqaigofvXVOxrYJh9bhvHa7nY-4EdJrt4BRA/]
+[/Users/kylekimler/gitHub/metaManager-HCA/docs/Example_allowed_entries_sheet.png]
 
-I have written some Google Drive API functions to make communication with GDrive easier. These are provided here:
-www.github.com/kylekimler/gdrive_api_extension.py
+Next, this google sheet is used to format two metadata entry google sheets per dataset, tier 1 and tier 2, which can then be sent to authors of existing studies or used for new experiments. 
 
-The HCA metadata schema is downloaded as a csv and used to display descriptions of each field at the top of the sheets.
+![*Metadata Workflow - Steps 1 and 2*](/Users/kylekimler/gitHub/metaManager-HCA/docs/GCA_metadata_workflow_1.png)
 
-First, download and install the python code at: https://github.com/kylekimler/MetaManager-HCA
+To create these sheets, we have built a python library that help generating google sheets with dropdown menus.
 
-#### Step 1: Loading the metadata definitions Google Sheets
+First, download and install the python code at: [https://github.com/kylekimler/MetaManager-HCA]
+
+## Step 1: Package setup and loading the metadata definitions Google Sheet
+
 ```{python set up libraries, echo=TRUE}
 from hca_metadata_manager.config import *
 from hca_metadata_manager.utils import *
@@ -71,18 +94,20 @@ from hca_metadata_manager.plots import *
 import re
 import pandas as pd
 import seaborn as sns
-# import scanpy as sc
 ```
 
-First, the google drive API must be initialized using the python library and an Oauth json credentials file must be created as in:
-[https://developers.google.com/sheets/api/quickstart/go]
+Before we can access Google Sheets with Python, the google drive python software must be initialized using the python library. 
+To communicate with Google Sheets, we need an authentication .json credentials file - this must be created as detailed by their documentation:
+[https://developers.google.com/sheets/api/quickstart/go] 
 
+Once we have downloaded the .json file, we can use it to allow python to access Google Sheets
 ```{python initialize google sheets, echo=TRUE}
 gc = initialize_google_sheets()
 
-# this credentials file is used to authorize the python API to access your Google Sheets.
+# The .json key you downloaded
 credentials_file = "/Users/kylekimler/OAuth_kk_metadata_uploader2.json"
 
+# Specify which Google API we are using - Spreadsheets and Drive
 scopes = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
 # To access GDrive, we authenticate python with GDrive, which creates an updated credentials object which we can use for the rest of the script
@@ -97,8 +122,9 @@ spreadsheet_id = '1N_Lyw6ZmcxS-3g49-oB98c6E5nuTVvbOQe3I_Myehxw'
 spreadsheet = gc.open_by_key(spreadsheet_id)
 ```
 
-#### Step 2: Downloading the accepted metadata google sheet
-Once you've opened the metadata definitions sheet with the API, we can download and convert it into a pandas dataframe.
+## Step 2: Downloading the metadata google sheet with Python
+Once we've opened the metadata definitions sheet, we can download and convert it into a list of pandas dataframes, one per tab.
+
 ```{python load definitions google sheet, echo = TRUE}
 tabs = ['Tier 1 Dataset Metadata', 'Tier 1 Donor Metadata', 'Tier 1 Sample Metadata', 'Tier 1 Celltype Metadata', 'Tier 2 Dataset Metadata', 'Tier 2 Donor Metadata', 'Tier 2 Sample Metadata']
 metadata_dfs = {}
@@ -115,7 +141,8 @@ for tab, df in metadata_dfs.items():
 ```
 
 After downloading the google sheet containing the allowed metadata entries, we add examples and descriptions as our friends at HCA have created.
-I have placed the descriptions sheet in the data/metadata_descriptions.csv. We can load and add these as header columns automatically using built-in functions here
+We could alternatively have these as header rows in the metadata definitions Google Sheet.
+I have placed the HCA/CELLxGENE descriptions sheet in the data/metadata_descriptions.csv. We can load and add these as header columns automatically using built-in functions here
 ```{python add metadata descriptions, echo=TRUE}
 metadata_dfs = add_metadata_descriptions(metadata_dfs)
 for tab, df in metadata_dfs.items():
@@ -124,57 +151,65 @@ for tab, df in metadata_dfs.items():
     break
 ```
 
-Now that we have the data object, a pandas dataframe, describing the data entry google sheets, we need a google drive folder to store all our sheets. 
+Now that we have the data describing the metadata fields and dropdowns we want to include in the data entry google sheets, we need a google drive folder to store all our sheets. 
 Go to https://drive.google.com and create a new folder via the top left + button. 
 
-Then, navigate to the new folder and take the URL suffix which the API will need to find the folder.
+Then, navigate to the new folder and take the URL suffix which we will need to find the folder.
 
 For example, this folder: https://drive.google.com/drive/folders/1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR,
 the suffix is 1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR.
 
-### Steps 3-6: Generating, tracking, and sharing metadata entry sheets
+# Steps 3 to 5: Generating, tracking, and sharing metadata entry sheets
 
 Metadata entry google sheets can be created with empty rows to send to new authors or collaborators to aid in experimental design
 Or they can be created to help collect metadata for experiments that have already been published online.
-<!-- When building an atlas, it can be a lot of work to pre-fill these based on data available online,
-but it may help increase engagement from dataset authors when we request completion. -->
 
-![Metadata Workflow - Steps 3 to 5](/Users/kylekimler/gitHub/metaManager-HCA/docs/GCA_metadata_workflow_2.png)
+This automated method for generating sheets can be extra helpful for meta-analyses that require communication with authors.
 
-#### Step 3: Generating an empty metadata entry google sheet
+By automating and restricting metadata, we can communicate more efficiently with authors as follows:
+
+![*Metadata Workflow - Steps 3 to 5*](/Users/kylekimler/gitHub/metaManager-HCA/docs/GCA_metadata_workflow_2.png)
+
+## Step 3: Generating an empty metadata entry google sheet
 Since tier 1 and tier 2 metadata must be collected separately, we create a separate google sheet for each. 
-These google sheets contain the tabs specified in the metadata definitions sheet above. 
+These google sheets contain the tabs specified in the metadata definitions sheet above. A single function in the library creates both sheets based on the pandas dataframe lists we built before.
 ```{python generate metadata sheets, echo=TRUE}
+
 folder_id = "1viymICEcfl5JOeVXxKxNDaQhTiHUEZKR"
 
-generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_id, dataset_id = 'Kimler2025', num_header_rows = 3)
+# specify number of header rows beyond 
+generate_empty_metadata_entry_sheets(metadata_dfs, # The pandas df's containing metadata fields and dropdown menu options for each
+                                    gc, # The communication service we created before
+                                    credentials, # The credentials object we made using our .json key
+                                    folder_id, # The URL suffix of the GDrive folder to place the empty Google Sheets
+                                    dataset_id = 'Kimler2025', # The name of the study we are collecting metadata for
+                                    num_header_rows = 3) # The number of header rows we want to include before setting dropdown menus
 ```
 
-![Example metadata tab](/Users/kylekimler/gitHub/metaManager-HCA/docs/Example_metadata_tab2.png)
+![*Example metadata tab*](/Users/kylekimler/gitHub/metaManager-HCA/docs/Example_metadata_tab2.png)
 <!-- 
 #### Step 3.2 Generating and pre-filling a google sheet using an existing h5ad file
 
 We can also fill one of these entry metadata sheets using an existing h5ad file. This way, the key columns (sample_id, donor_id, etc) are pre-defined based on the data. -->
 
-#### Step 4: Determining the completeness of metadata entry
+## Step 4: Determining the completeness of metadata entry
 
 Some mistakes can be easily fixed, while others have to be addressed by the authors themselves. 
 Since the google sheets are accessible online, anyone can edit them to help out, 
-and we can provide guidance by loading them from their static URL's and determining whether they are correct and complete.
-
-By checking if the metadata entries are filled in completely
+and we can provide guidance by loading them from their URL's and determining whether they are correct and complete.
 
 For the entries that have dropdown menus, we can simply check if they were filled out or not, while for free text entries,
 we can check if they match some pattern or are strings or integers to determine if the entered values follow HCA requirements and do not contain special characters.
 
 ```{python list google sheets google sheet, echo = TRUE}
-folder_id = '1Bg7NpsChMNUvSOasqP6iyQ4Et0SpyrZo' # The Google Drive folder URL where all our entry metadata google sheets are filled
+# First, specify the folder where we will download all our metadata entry google sheets
+folder_id = '1Bg7NpsChMNUvSOasqP6iyQ4Et0SpyrZo'
 
-# folder_id is the GDrive folder where we placed our metadata entry sheets
+# Then list the google sheets in that folder
 googlesheets = list_google_sheets(credentials, folder_id)
 ```
 
-In this example we have collected harmonized metadata for several studies, which we can then load into python directly from the Google Sheets using the library
+In this example we have collected harmonized metadata for over 15 studies, which we can then load into python directly from the Google Sheets using the library
 
 ```{python load google sheets, echo=TRUE}
 metadata = load_sheets_metadata(credentials, googlesheets)
@@ -184,7 +219,7 @@ At this point, to be able to tell whether the data was filled in correctly and c
 For the dropdown menus, this should be easy, we can just compare them to lists of data. For free text entries, we can create other rules with regular expressions.
 
 In the code for this document, rules are created for most of the included metadata. 
-Here I will show a subset
+Here I will show a subset of these rules
 
 ```{python creating rules to check correctness}
 # Other tier2 metadata we need for downstream analysis
@@ -320,8 +355,7 @@ permitted_patterns_dict = {
 }
 ```
 
-
-Finally, using these terms and some library functions, we can create correctness plots
+Finally, using these terms and some library functions, we can create heatmaps to show which metadata are filled as we expected
 ```{python, echo=TRUE}
 sns.set(font_scale=2)
 
@@ -330,7 +364,7 @@ for metadata_type, df in metadata.items():
     plot_correctness_heatmap(correctness_df.T, f'{metadata_type.capitalize()} Metadata Correctness')  # Transpose for x-axis as fields
 ```
 
-#### Step 5: Instant feedback for metadata entry completeness
+## Step 5: Instant feedback for metadata entry completeness
 
 To provide instant feedback for metadata contributors, we can upload these graphs to a simple website. 
 At CDN we use Google Cloud, which makes hosting tiny websites easy. 
@@ -340,17 +374,19 @@ in it. We have done this and created "metadata_correctness.html". Once we have t
 Just upload it to a google bucket (usually best to create a new one) and give the bucket "allUsers" permissions on the bucket.
 Our google bucket is called "hca_gut_cell_atlas".
 
-Then, run the following:
+Then, use the gcloud API in terminal to run one line to create the website:
 ```{bash, evaluate=FALSE, echo=TRUE}
 gsutil web set -m metadata_correctness.html gs://hca_gut_cell_atlas
 ```
 
 This sets the html as the homepage for the website, which you can access with the link:
+http://\[name_of_bucket\].storage.googleapis.com/\[name_of_file\].html
 http://hca_gut_cell_atlas.storage.googleapis.com/metadata_correctness.html
 
 # Conclusion
 
 Now we have created restricted metadata entry sheets which multiple people can contribute to online, and we have a method for checking whether these were filled out correctly. 
-As they are online and available to all collaborators, this method prevents siloing of bioinformaticians, medical staff, and experimentalists. 
+As they are online and available to all collaborators, this method should help prevent siloing of bioinformaticians, medical staff, and experimentalists,
+and it streamlines large-scale collection of metadata from collaborators. 
 
 If you have any suggestions or questions regarding the pipeline, they are more than welcome! Thanks for reading.

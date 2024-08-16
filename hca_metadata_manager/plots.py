@@ -197,11 +197,20 @@ def calculate_correctness_per_group(df, permitted_values, permitted_patterns, gr
 
 
 def plot_correctness_heatmap(correctness_df, title):
+    correctness_df = correctness_df.round().astype(int)
     plt.figure(figsize=(12, 8))
-    sns.heatmap(correctness_df, annot=True, fmt=".1f", cmap='viridis', linewidths=.5, annot_kws={"size": 35 / np.sqrt(len(correctness_df))},)
-    plt.title(title)
-    plt.xticks(rotation=45)
+    # Calculate annotation font size dynamically, smaller dataframe -> larger font
+    annot_kws = {"size": max(10, 35 / np.sqrt(len(correctness_df)))}
+    # Create heatmap with adjusted annotation
+    ax = sns.heatmap(correctness_df, annot=True, fmt="d", 
+                     cmap='viridis', linewidths=.5, 
+                    #  annot_kws=annot_kws,
+                     cbar_kws={'label': 'Percent of Field Correctly Filled'})
+    # Title and labels with added padding to prevent cut-off
+    plt.title(title, pad=20)
+    plt.xticks(rotation=45, ha='right')  # Adjust alignment and rotation
     plt.yticks(rotation=0)
-    plt.ylabel('Worksheet')
-    plt.xlabel('Metadata Fields')
+    # Tight layout to ensure everything fits without overlap or cut-off
+    plt.tight_layout()
+    # Display the plot
     plt.show()
