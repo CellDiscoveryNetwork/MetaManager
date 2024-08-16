@@ -357,7 +357,7 @@ permitted_patterns_dict = {
 
 Finally, using these terms and some library functions, we can create heatmaps to show which metadata are filled as we expected
 ```{python, echo=TRUE}
-sns.set(font_scale=2)
+sns.set(font_scale=0.75)
 
 for metadata_type, df in metadata.items():
     correctness_df = calculate_correctness_per_group(df, permitted_values_dict, permitted_patterns_dict)
