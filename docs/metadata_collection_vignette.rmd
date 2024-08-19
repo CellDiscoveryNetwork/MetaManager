@@ -81,7 +81,7 @@ Next, this google sheet is used to format two metadata entry google sheets per d
 
 To create these sheets, we have built a python library that help generating google sheets with dropdown menus.
 
-First, download and install the python code at: [https://github.com/kylekimler/MetaManager-HCA]
+First, download and install the python code at: [https://github.com/CellDiscoveryNetwork/MetaManager]
 
 ## Step 1: Package setup and loading the metadata definitions Google Sheet
 
