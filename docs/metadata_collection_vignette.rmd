@@ -52,6 +52,8 @@ then in steps 3 to 5, the metadata ENTRY files (in green) can be created and upd
 
 # Steps 1 and 2: Defining Metadata
 
+![*Metadata Workflow - Steps 1 and 2*](/Users/kylekimler/gitHub/metaManager-HCA/docs/GCA_metadata_workflow_1.png)
+
 The first step in the metadata management process is to create rigid definitions for the metadata. 
 
 It is important to be as comprehensive as possible before we begin collecting data, 
@@ -76,8 +78,6 @@ For this workflow, this Google Sheet should contain
 [/Users/kylekimler/gitHub/metaManager-HCA/docs/Example_allowed_entries_sheet.png]
 
 Next, this google sheet is used to format two metadata entry google sheets per dataset, tier 1 and tier 2, which can then be sent to authors of existing studies or used for new experiments. 
-
-![*Metadata Workflow - Steps 1 and 2*](/Users/kylekimler/gitHub/metaManager-HCA/docs/GCA_metadata_workflow_1.png)
 
 To create these sheets, we have built a python library that help generating google sheets with dropdown menus.
 
@@ -380,7 +380,9 @@ gsutil web set -m metadata_correctness.html gs://hca_gut_cell_atlas
 ```
 
 This sets the html as the homepage for the website, which you can access with the link:
-http://\[name_of_bucket\].storage.googleapis.com/\[name_of_file\].html
+http://name_of_bucket.storage.googleapis.com/name_of_file.html
+*Please replace `name_of_bucket` and `name_of_file` with what you named these!*
+
 http://hca_gut_cell_atlas.storage.googleapis.com/metadata_correctness.html
 
 # Conclusion
