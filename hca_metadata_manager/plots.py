@@ -195,22 +195,14 @@ def calculate_correctness_per_group(df, permitted_values, permitted_patterns, gr
         all_correctness = pd.concat([all_correctness, correctness_df], axis=0)
     return all_correctness
 
-
 def plot_correctness_heatmap(correctness_df, title):
     correctness_df = correctness_df.round().astype(int)
-    plt.figure(figsize=(12, 8))
-    # Calculate annotation font size dynamically, smaller dataframe -> larger font
-    # annot_kws = {"size": max(6, 35 / np.sqrt(len(correctness_df)))}
-    # Create heatmap with adjusted annotation
-    ax = sns.heatmap(correctness_df, annot=False, fmt="d", 
-                     cmap='viridis', linewidths=.5, 
-                    #  annot_kws=annot_kws,
+    plt.figure(figsize=(15, 8))  # Adjusted figure size
+    sns.set_theme(style="whitegrid", font_scale=0.7)  # Using set_theme with style and font scale
+    ax = sns.heatmap(correctness_df, annot=False, fmt="d", cmap='viridis', linewidths=.5,
                      cbar_kws={'label': 'Percent of Field Correctly Filled'})
-    # Title and labels with added padding to prevent cut-off
     plt.title(title, pad=20)
-    plt.xticks(rotation=45, ha='right')  # Adjust alignment and rotation
+    plt.xticks(rotation=60, ha='right')  # Adjust rotation slightly if needed
     plt.yticks(rotation=0)
-    # Tight layout to ensure everything fits without overlap or cut-off
-    plt.tight_layout()
-    # Display the plot
+    plt.tight_layout()  # Ensures everything fits without overlap or cut-off
     plt.show()
