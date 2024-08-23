@@ -12,6 +12,13 @@ from .config import authenticate_with_google
 import pandas as pd
 import pkg_resources
 import time
+import random
+
+def backoff(attempt, max_delay=60):
+    """ Calculate sleep time in seconds for exponential backoff. """
+    delay = min(max_delay, (2 ** attempt) + (random.randint(0, 1000) / 1000))
+    time.sleep(delay)
+    return delay
 
 def convert_numeric_to_string(data):
     if isinstance(data, dict):
@@ -627,7 +634,7 @@ def set_dropdown_list_by_id(spreadsheet_id, sheet_index, column_index, num_heade
         "setDataValidation": {
             "range": {
                 "sheetId": sheet_id,
-                "startRowIndex": num_header_rows - 1,  # Adjust for zero-based index by API
+                "startRowIndex": num_header_rows + 1,  # Adjust for header name rows and "fill out below" banner
                 "endRowIndex": max_rows, 
                 "startColumnIndex": column_index,
                 "endColumnIndex": column_index + 1
@@ -763,51 +770,97 @@ def add_metadata_descriptions(metadata_dfs, descriptions_csv=None):
         updated_dfs[tab_name] = combined_df
     return updated_dfs
 
-def load_sheets_metadata(credentials, googlesheets):
-    spreadsheet_ids = []
-    for goo in googlesheets:
-        spreadsheet_ids.append(goo['id'])
+# def load_sheets_metadata(credentials, googlesheets):
+#     spreadsheet_ids = []
+#     for goo in googlesheets:
+#         spreadsheet_ids.append(goo['id'])
 
+#     service = build('sheets', 'v4', credentials=credentials)
+#     all_dfs = {}  # Dictionary to store dataframes for each metadata type
+
+#     for spreadsheet_id in spreadsheet_ids:
+#         print(f'Loading data from Spreadsheet ID: {spreadsheet_id}')
+#         spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+#         sheets = spreadsheet.get('sheets', [])
+
+#         for sheet in sheets:
+#             title = sheet['properties']['title']
+#             if 'metadata' in title.lower():
+#                 # First retrieve only the first row to count non-empty columns
+#                 first_row_range = f'{title}!1:1'
+#                 first_row_result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=first_row_range).execute()
+#                 first_row_values = first_row_result.get('values', [])
+                
+#                 if first_row_values:
+#                     # Count non-empty columns in the first row
+#                     non_empty_columns = len(first_row_values[0])
+#                     last_column_letter = column_to_gsheet_letter(non_empty_columns)
+#                     range_name = f'{title}!A:{last_column_letter}'
+                    
+#                     # Retrieve the full range with the correct number of columns
+#                     result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
+#                     rows = result.get('values', [])
+#                     if rows:
+#                         headers = rows.pop(0)
+#                         adjusted_rows = [row + [None] * (len(headers) - len(row)) for row in rows[4:]]
+#                         df_temp = pd.DataFrame(adjusted_rows, columns=headers)
+#                         df_temp['worksheet'] = spreadsheet['properties']['title'].split(" ")[0]
+                        
+#                         metadata_type = title.lower().split('metadata')[0].strip()
+#                         if metadata_type in all_dfs:
+#                             all_dfs[metadata_type] = pd.concat([all_dfs[metadata_type], df_temp], ignore_index=True)
+#                         else:
+#                             all_dfs[metadata_type] = df_temp
+
+#         # Throttle the speed of API calls to avoid exceeding limit
+#         time.sleep(15)
+
+#     return all_dfs
+
+def load_sheets_metadata(credentials, googlesheets):
     service = build('sheets', 'v4', credentials=credentials)
     all_dfs = {}  # Dictionary to store dataframes for each metadata type
-
-    for spreadsheet_id in spreadsheet_ids:
-        print(f'Loading data from Spreadsheet ID: {spreadsheet_id}')
-        spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
-        sheets = spreadsheet.get('sheets', [])
-
-        for sheet in sheets:
-            title = sheet['properties']['title']
-            if 'metadata' in title.lower():
-                # First retrieve only the first row to count non-empty columns
-                first_row_range = f'{title}!1:1'
-                first_row_result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=first_row_range).execute()
-                first_row_values = first_row_result.get('values', [])
-                
-                if first_row_values:
-                    # Count non-empty columns in the first row
-                    non_empty_columns = len(first_row_values[0])
-                    last_column_letter = column_to_gsheet_letter(non_empty_columns)
-                    range_name = f'{title}!A:{last_column_letter}'
-                    
-                    # Retrieve the full range with the correct number of columns
-                    result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
-                    rows = result.get('values', [])
-                    if rows:
-                        headers = rows.pop(0)
-                        adjusted_rows = [row + [None] * (len(headers) - len(row)) for row in rows[4:]]
-                        df_temp = pd.DataFrame(adjusted_rows, columns=headers)
-                        df_temp['worksheet'] = spreadsheet['properties']['title'].split(" ")[0]
-                        
-                        metadata_type = title.lower().split('metadata')[0].strip()
-                        if metadata_type in all_dfs:
-                            all_dfs[metadata_type] = pd.concat([all_dfs[metadata_type], df_temp], ignore_index=True)
-                        else:
-                            all_dfs[metadata_type] = df_temp
-
-        # Throttle the speed of API calls to avoid exceeding limit
-        time.sleep(15)
-
+    for sheet_info in googlesheets:
+        spreadsheet_id = sheet_info['id']
+        attempt = 0  # Initialize attempt counter
+        while attempt < 8:  # Allow up to 5 attempts
+            try:
+                print(f'Loading data from Spreadsheet ID: {spreadsheet_id}')
+                spreadsheet = service.spreadsheets().get(spreadsheetId=spreadsheet_id).execute()
+                sheets = spreadsheet.get('sheets', [])
+                for sheet in sheets:
+                    title = sheet['properties']['title']
+                    if 'metadata' in title.lower():
+                        # First retrieve only the first row to count non-empty columns
+                        first_row_range = f'{title}!1:1'
+                        first_row_result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=first_row_range).execute()
+                        first_row_values = first_row_result.get('values', [])
+                        if first_row_values:
+                            non_empty_columns = len(first_row_values[0])
+                            last_column_letter = column_to_gsheet_letter(non_empty_columns)
+                            range_name = f'{title}!A:{last_column_letter}'     
+                            result = service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
+                            rows = result.get('values', [])
+                            if rows:
+                                headers = rows.pop(0)
+                                adjusted_rows = [row + [None] * (len(headers) - len(row)) for row in rows[4:]]
+                                df_temp = pd.DataFrame(adjusted_rows, columns=headers)
+                                df_temp['worksheet'] = spreadsheet['properties']['title'].split(" ")[0]
+                                metadata_type = title.lower().split('metadata')[0].strip()
+                                if metadata_type in all_dfs:
+                                    all_dfs[metadata_type] = pd.concat([all_dfs[metadata_type], df_temp], ignore_index=True)
+                                else:
+                                    all_dfs[metadata_type] = df_temp
+                break  # Exit loop after successful load
+            except Exception as e:
+                if 'Quota exceeded' in str(e) and attempt < 7:  # Check if the error is due to quota exceeded
+                    sleep_time = backoff(attempt)
+                    print(f"Quota exceeded, retrying after {sleep_time:.2f} seconds...")
+                    time.sleep(sleep_time)
+                    attempt += 1
+                else:
+                    print(f"Failed to load sheet {spreadsheet_id} on attempt {attempt + 1}: {str(e)}")
+                    break  # Break after max attempts or other types of errors
     return all_dfs
 
 def column_to_gsheet_letter(column_number):
@@ -819,3 +872,30 @@ def column_to_gsheet_letter(column_number):
         column_number, remainder = divmod(column_number - 1, 26)
         letter = chr(65 + remainder) + letter
     return letter
+
+def create_set_dropdown_request(sheet_id, column_index, values, num_header_rows, max_rows):
+    """Generate a request to set dropdowns for a specific column."""
+    # Check if there are meaningful values to add in the dropdown
+    if not values or (len(values) == 1 and values[0] == ""):
+        # print(f"No valid dropdown values to set for column index {column_index} in sheet index {sheet_index}.")
+        return None  # Exit if no valid values
+    return {
+        "setDataValidation": {
+            "range": {
+                "sheetId": sheet_id,
+                "startRowIndex": num_header_rows,  # Skip header rows
+                "endRowIndex": max_rows, 
+                "startColumnIndex": column_index,
+                "endColumnIndex": column_index + 1
+            },
+            "rule": {
+                "condition": {
+                    "type": "ONE_OF_LIST",
+                    "values": [{"userEnteredValue": str(val)} for val in values]
+                },
+                "inputMessage": "Select from the list",
+                "strict": True,
+                "showCustomUi": True
+            }
+        }
+    }

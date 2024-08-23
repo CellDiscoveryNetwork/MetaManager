@@ -52,7 +52,7 @@ def apply_dropdowns(spreadsheet_id, credentials, gc,
     else:
         print("Automatically configuring dropdowns based on metadata definitions.")
         for sheet_title, df in metadata_dfs.items():
-            valid_rows = df.iloc[num_header_rows-2:]
+            valid_rows = df.iloc[num_header_rows:]
             dropdowns_config[sheet_title.lower()] = {col: valid_rows[col].dropna().unique().tolist() for col in df.columns if not valid_rows[col].isnull().all()}
     dropdowns_config = convert_numeric_to_string(dropdowns_config)
     # Apply dropdowns using the fetched sheet information
@@ -212,7 +212,7 @@ def generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, folder_i
         except gspread.exceptions.WorksheetNotFound:
             print("\n")
         format_all_sheets(file_id, credentials)
-        apply_dropdowns(file_id, credentials, gc, metadata_dfs=metadata_dfs, num_header_rows=5)
+        apply_dropdowns(file_id, credentials, gc, metadata_dfs=metadata_dfs, num_header_rows = num_header_rows)
         move_sheet_in_drive(file_id, folder_id, credentials)
         sleep(30)
 
@@ -257,3 +257,67 @@ def debug_generate_empty_metadata_entry_sheets(metadata_dfs, gc, credentials, fo
         move_sheet_in_drive(file_id, folder_id, credentials)
         sleep(30)
 
+
+def update_existing_sheets(folder_id, credentials, gc, metadata_dfs, num_header_rows=1, attempts = 8):
+    """Update existing Google Sheets with new column headers and dropdown configurations."""
+    sheets_service = build('sheets', 'v4', credentials=credentials)
+    # List all sheets in the folder
+    sheets = list_google_sheets(credentials, folder_id)
+    for sheet_info in sheets:
+        spreadsheet_id = sheet_info['id']
+        attempt = 0  # Initialize attempt counter
+        while attempt < attempts:  # Allow up to 5 attempts
+            try:
+                # Load the current structure of the spreadsheet
+                current_sheets = gc.open_by_key(spreadsheet_id).worksheets()
+                current_sheets_dict = {sheet.title: sheet for sheet in current_sheets}
+                # Prepare for updates
+                requests = []
+                for tab_name, df_config in metadata_dfs.items():
+                    # Prepare data from the configuration dataframe
+                    valid_rows = df_config.iloc[num_header_rows:]
+                    dropdown_config = {col: valid_rows[col].dropna().unique().tolist() for col in df_config.columns if not valid_rows[col].isnull().all()}
+                    if tab_name in current_sheets_dict:
+                        sheet = current_sheets_dict[tab_name]
+                        current_headers = sheet.row_values(1)  # Assuming headers are in the first row
+                        header_to_index = {header: i for i, header in enumerate(current_headers)}
+                        config_headers = list(df_config.columns)
+                        # Check for new columns and append them
+                        for col in config_headers:
+                            if col not in current_headers:
+                                insert_at_index = config_headers.index(col)  # Find index from metadata_dfs
+                                # Append column at the specific index found from metadata_dfs
+                                requests.append({
+                                    'insertDimension': {
+                                        'range': {
+                                            'sheetId': sheet.id,
+                                            'dimension': 'COLUMNS',
+                                            'startIndex': insert_at_index,
+                                            'endIndex': insert_at_index + 1
+                                        },
+                                        'inheritFromBefore': False
+                                    }
+                                })
+                                # Need to update local tracking of headers and indices post-insertion
+                                current_headers.insert(insert_at_index, col)
+                                header_to_index = {header: i for i, header in enumerate(current_headers)}  # Re-map headers to indices
+                        # Set or update dropdowns
+                        for column, values in dropdown_config.items():
+                            column_index = header_to_index[column] + 1  # 1-based index for Sheets API
+                            if values:  # Only add dropdowns if there are actual options
+                                dropdown_request = create_set_dropdown_request(sheet.id, column_index - 1, values, num_header_rows = num_header_rows, max_rows = len(sheet.get_all_values()))
+                                requests.append(dropdown_request)
+                if requests:
+                    body = {'requests': requests}
+                    response = sheets_service.spreadsheets().batchUpdate(spreadsheetId=spreadsheet_id, body=body).execute()
+                    print(f"Updated {len(requests)} elements in spreadsheet '{spreadsheet_id}'")
+                break  # Exit loop after successful update
+            except Exception as e:
+                if 'Quota exceeded' in str(e) and attempt < attempts - 1:  # Check if the error is due to quota exceeded
+                    sleep_time = backoff(attempt)
+                    print(f"Google Sheets API quota exceeded, retrying after {sleep_time:.2f} seconds...")
+                    time.sleep(sleep_time)
+                    attempt += 1
+                else:
+                    print(f"Failed to update sheet {spreadsheet_id} on attempt {attempt + 1}: {str(e)}")
+                    break  # Break after max attempts or other types of errors

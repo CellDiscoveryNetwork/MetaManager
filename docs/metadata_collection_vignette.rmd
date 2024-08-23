@@ -183,7 +183,7 @@ generate_empty_metadata_entry_sheets(metadata_dfs, # The pandas df's containing 
                                     credentials, # The credentials object we made using our .json key
                                     folder_id, # The URL suffix of the GDrive folder to place the empty Google Sheets
                                     dataset_id = 'Kimler2025', # The name of the study we are collecting metadata for
-                                    num_header_rows = 3) # The number of header rows we want to include before setting dropdown menus
+                                    num_header_rows = 3) # The number of header rows, not including row names or "fill below banner", we want to include before setting dropdown menus
 ```
 
 ![*Example metadata tab*](/Users/kylekimler/gitHub/metaManager-HCA/docs/Example_metadata_tab2.png)
