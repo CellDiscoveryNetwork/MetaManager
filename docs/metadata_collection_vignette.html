@@ -11,7 +11,7 @@
 
 <meta name="author" content="Kyle Kimler" />
 
-<meta name="date" content="2024-08-22" />
+<meta name="date" content="2024-08-26" />
 
 <title>Collecting metadata in large-scale projects</title>
 
@@ -398,7 +398,7 @@ projects</h1>
 <h3 class="subtitle">A case study of the HCA integrated gut cell
 atlas</h3>
 <h4 class="author">Kyle Kimler</h4>
-<h4 class="date">22 August 2024</h4>
+<h4 class="date">26 August 2024</h4>
 
 </div>
 
@@ -410,13 +410,16 @@ clinical covariates which can affect analysis. The collection of these
 covariates can be a difficult process because they span multiple
 experimental levels. This is especially true in single-cell experiments,
 where thousands of cells are collected per sample, and sometimes
-multiple samples are collected per individual. It is critical to
-organize these metadata sufficiently, and if we want to bring in prior
-data, we need to create or follow a standard metadata format to be able
-to make comparisons. When analyzing published data, required metadata
-fields are sometimes unavailable, so it is necessary to reach out to the
-authors of published data. When reaching out, providing a standardized
-metadata sheet can help skip redundant metadata wrangling.</p>
+multiple samples are collected per individual. Here, we use the term
+<em>metadata</em> to refer to any variable related to the dataset,
+participant, sample, cell or gene except the core cellxgene expression
+matrix. It is critical to organize these metadata sufficiently, and if
+we want to bring in prior data, we need to create or follow a standard
+metadata format to be able to make comparisons. When analyzing published
+data, required metadata fields are sometimes unavailable, so it is
+necessary to reach out to the authors of published data. When reaching
+out, providing an online standardized metadata sheet improves accuracy,
+skips redundant data wrangling steps, and enhances collaboration.</p>
 <p>In this vignette, I will demonstrate methods for collecting and
 harmonizing metadata for human single-cell experiments on an atlas level
 using Google Sheets. We use this collection process in the HCA
@@ -424,26 +427,27 @@ integrated gut cell atlas project.</p>
 <div id="design-of-metadata" class="section level2">
 <h2>Design of Metadata</h2>
 <p>The HCA provides a required metadata schema that also includes
-metadata fields required by CELLxGENE. The HCA metadata guidelines can
-be quite confusing [<a href="https://data.humancellatlas.org/metadata" class="uri">https://data.humancellatlas.org/metadata</a>]. Essentially,
-these follow similar guidelines to CELLxGENE, which is more simply
-detailed here [<a href="https://cellxgene.cziscience.com/docs/032__Contribute%20and%20Publish%20Data" class="uri">https://cellxgene.cziscience.com/docs/032__Contribute%20and%20Publish%20Data</a>]
-in terms of single-cell data analysis. We adhere to this schema to make
+metadata fields required by CELLxGENE. The HCA metadata guidelines are
+highly detailed (<a href="https://data.humancellatlas.org/metadata" class="uri">https://data.humancellatlas.org/metadata</a>). The HCA
+follows similar guidelines to CELLxGENE, which is more simply detailed
+here (<a href="https://cellxgene.cziscience.com/docs/032__Contribute%20and%20Publish%20Data" class="uri">https://cellxgene.cziscience.com/docs/032__Contribute%20and%20Publish%20Data</a>)
+in terms of single-cell data analysis. We adhere to both schema to make
 dataset upload to the portals easier. The following portals increase
 public data accessibility and offer unique methods.</p>
 <ul>
-<li>(CELLxgene)[<a href="https://cellxgene.cziscience.com/" class="uri">https://cellxgene.cziscience.com/</a>]: A highly
-optimized/efficient app for working with single-cell data</li>
-<li>(HCA)[<a href="https://data.humancellatlas.org/" class="uri">https://data.humancellatlas.org/</a>]: A platform for
-storing data for use in meta-atlases</li>
-<li>(CAP)[<a href="https://celltype.info" class="uri">https://celltype.info</a>]: An analysis app similar to
-CELLxGENE with a focus on crowd-sourcing celltype annotations</li>
+<li><em>CZI</em>: <a href="https://cellxgene.cziscience.com/">CELLxGENE.cziscience.com</a>: A
+highly optimized/efficient app for working with single-cell data</li>
+<li><em>HCA</em>: <a href="https://data.humancellatlas.org/">data.humancellatlas.org</a>: A
+platform for storing data for use in meta-atlases</li>
+<li><em>CAP</em>: <a href="https://celltype.info">celltype.info</a>: An
+analysis app similar to CELLxGENE with a focus on crowd-sourcing
+celltype annotations</li>
 </ul>
 <p>The metadata schema used by these platforms has several useful
 delineations - one is separation of patient-protected and
 tissue-specific metadata fields from common-to-all human experiments
-metadata fields. HCA terms these “Tier 1” and “Tier 2” metadata,
-respectively.</p>
+metadata fields. HCA terms these Tier 1 (common metadata) and Tier 2
+(patient-protected and tissue-specific).</p>
 <p>Some fields in the schema are coded according to standards decided by
 large international bioinformatic consortia like the EBI ontology
 Service [<a href="https://www.ebi.ac.uk/ols4/" class="uri">https://www.ebi.ac.uk/ols4/</a>], These are outlined on the
@@ -475,8 +479,8 @@ where metadata are defined and allowed entries for each are listed. The
 google sheet format allows for collaborative editing, and rigid
 definitions make downstream analysis much easier.</p>
 <p>Beyond codes and ontology schema, most metadata fields can be
-standardized to some degree. For example, fields like “manner_of_death”
-are coded to fit a standard, others like
+standardized to some degree. For example, fields like
+“sample_collection_method” are coded to fit a standard, others like
 “development_stage_ontology_term_id” must adhere to a 10-year age range
 in tier 1 metadata to avoid identification, while others like
 “library_id” must follow a certain pattern like a string with no special
@@ -623,9 +627,9 @@ generate_empty_metadata_entry_sheets(metadata_dfs, # The pandas df&#39;s contain
                                     credentials, # The credentials object we made using our .json key
                                     folder_id, # The URL suffix of the GDrive folder to place the empty Google Sheets
                                     dataset_id = &#39;Kimler2025&#39;, # The name of the study we are collecting metadata for
-                                    num_header_rows = 3) # The number of header rows we want to include before setting dropdown menus</code></pre>
+                                    num_header_rows = 3) # The number of header rows, not including row names or &quot;fill below banner&quot;, we want to include before setting dropdown menus</code></pre>
 <pre><code>## Formatting 4 sheets
-## Starting to apply dropdowns on spreadsheet 1rc3TTiFbOvRTEis2ZpGVnKXJ6afQdowL1ru4tOUWjrw
+## Starting to apply dropdowns on spreadsheet 1851gEDiLUVMwelw26k5oLVsIh4MRtbAFgoRLc0Cqmik
 ## Sheet1 does not exist or was already deleted.
 ## Automatically configuring dropdowns based on metadata definitions.
 ## Applying dropdowns for &#39;Tier 1 Dataset Metadata&#39;
@@ -633,7 +637,7 @@ generate_empty_metadata_entry_sheets(metadata_dfs, # The pandas df&#39;s contain
 ## Applying dropdowns for &#39;Tier 1 Sample Metadata&#39;
 ## Applying dropdowns for &#39;Tier 1 Celltype Metadata&#39;
 ## Formatting 3 sheets
-## Starting to apply dropdowns on spreadsheet 1rXdDbGE2M2DNoDcJOwiKd2Ubp1Ow5pVU5Why4HZcRt0
+## Starting to apply dropdowns on spreadsheet 1jnLI_Hzl5URQZ93LBoEDlXhPwpRps4NF-lNHq1WWwKo
 ## Sheet1 does not exist or was already deleted.
 ## Automatically configuring dropdowns based on metadata definitions.
 ## Applying dropdowns for &#39;Tier 2 Dataset Metadata&#39;
@@ -655,8 +659,8 @@ and complete.</p>
 <p>For the entries that have dropdown menus, we can simply check if they
 were filled out or not, while for free text entries, we can check if
 they match some pattern or are strings or integers to determine if the
-entered values follow HCA requirements and do not contain special
-characters.</p>
+entered values follow HCA requirements, do not contain special
+characters, or fit other expected criteria</p>
 <pre class="python"><code># First, specify the folder where we will download all our metadata entry google sheets
 folder_id = &#39;1Bg7NpsChMNUvSOasqP6iyQ4Et0SpyrZo&#39;
 
@@ -704,29 +708,23 @@ Sheets using the library</p>
 ## Loading data from Spreadsheet ID: 11G_uvqIPsCM92jI3i14Dlqy7Yc8CriaAwhM5umVwHHg
 ## Loading data from Spreadsheet ID: 1AhKKgFhb_V9w_OqVm-4nLgmRzCxXAyODsYkQYwOiMUQ
 ## Loading data from Spreadsheet ID: 1dBB47nKvww0PTSPGTeSKbsAg5yLM83rwJMqQANM7DGY
-## Quota exceeded, retrying after 1.36 seconds...
-## Loading data from Spreadsheet ID: 1dBB47nKvww0PTSPGTeSKbsAg5yLM83rwJMqQANM7DGY
-## Loading data from Spreadsheet ID: 1TmXdDWRcsNhg2LhWRhzzblCYbzYOILf-LB5Kvbwbv6g
-## Quota exceeded, retrying after 1.67 seconds...
-## Loading data from Spreadsheet ID: 1TmXdDWRcsNhg2LhWRhzzblCYbzYOILf-LB5Kvbwbv6g
-## Quota exceeded, retrying after 2.21 seconds...
 ## Loading data from Spreadsheet ID: 1TmXdDWRcsNhg2LhWRhzzblCYbzYOILf-LB5Kvbwbv6g
 ## Loading data from Spreadsheet ID: 14H5rasr6ZrV0b5MfB9RWEibRhkWGDIr3QaTTmhdQYh8
 ## Loading data from Spreadsheet ID: 12t6luQUT3BzQ3bMt7tKvE5Y_4pbOVbcwM32FDt2B5KM
 ## Loading data from Spreadsheet ID: 1K4ZbBTC0FfRKhVdwMDz1OuK-FTbDKAPDVdEH_iuxWI4
 ## Loading data from Spreadsheet ID: 1FB83yetrNbaqdvDFGVNmGOxV8GQxmDuclfiR06Qpocs
 ## Loading data from Spreadsheet ID: 1DMX3LPUAwlUgF26uYp9EOCVcqo-xBi4dqhegR3wVGSs
+## Quota exceeded, retrying after 1.84 seconds...
+## Loading data from Spreadsheet ID: 1DMX3LPUAwlUgF26uYp9EOCVcqo-xBi4dqhegR3wVGSs
+## Quota exceeded, retrying after 2.38 seconds...
+## Loading data from Spreadsheet ID: 1DMX3LPUAwlUgF26uYp9EOCVcqo-xBi4dqhegR3wVGSs
+## Quota exceeded, retrying after 4.38 seconds...
+## Loading data from Spreadsheet ID: 1DMX3LPUAwlUgF26uYp9EOCVcqo-xBi4dqhegR3wVGSs
+## Quota exceeded, retrying after 8.36 seconds...
+## Loading data from Spreadsheet ID: 1DMX3LPUAwlUgF26uYp9EOCVcqo-xBi4dqhegR3wVGSs
+## Quota exceeded, retrying after 16.02 seconds...
+## Loading data from Spreadsheet ID: 1DMX3LPUAwlUgF26uYp9EOCVcqo-xBi4dqhegR3wVGSs
 ## Loading data from Spreadsheet ID: 1I4wQSwZWrjUl_v-08XS1dUkZd37aDzQUqNXy-AhPzgo
-## Loading data from Spreadsheet ID: 1BBIlM2DGezTuc9_jLBDLHTIaG4c5KhlFAOZJuIUHAsw
-## Quota exceeded, retrying after 1.25 seconds...
-## Loading data from Spreadsheet ID: 1BBIlM2DGezTuc9_jLBDLHTIaG4c5KhlFAOZJuIUHAsw
-## Quota exceeded, retrying after 2.70 seconds...
-## Loading data from Spreadsheet ID: 1BBIlM2DGezTuc9_jLBDLHTIaG4c5KhlFAOZJuIUHAsw
-## Quota exceeded, retrying after 4.42 seconds...
-## Loading data from Spreadsheet ID: 1BBIlM2DGezTuc9_jLBDLHTIaG4c5KhlFAOZJuIUHAsw
-## Quota exceeded, retrying after 8.41 seconds...
-## Loading data from Spreadsheet ID: 1BBIlM2DGezTuc9_jLBDLHTIaG4c5KhlFAOZJuIUHAsw
-## Quota exceeded, retrying after 16.03 seconds...
 ## Loading data from Spreadsheet ID: 1BBIlM2DGezTuc9_jLBDLHTIaG4c5KhlFAOZJuIUHAsw
 ## Loading data from Spreadsheet ID: 1Nk3VHp0cmWlSCMr5t05KAeS8prF_PFIeXuEfB1wh3EA
 ## Loading data from Spreadsheet ID: 1sChzz2fmQrS7OuSI_Lq9qKArcY_-MEip0aQlnmbrmp8
@@ -778,8 +776,8 @@ for metadata_type, df in metadata.items():
 <div id="step-5-instant-feedback-for-metadata-entry-completeness" class="section level2">
 <h2>Step 5: Instant feedback for metadata entry completeness</h2>
 <p>To provide instant feedback for metadata contributors, we can upload
-these graphs to a simple website. At CDN we use Google Cloud, which
-makes hosting tiny websites easy.</p>
+these graphs to a simple website. At the Cell Discovery Network, we use
+Google Cloud, which makes hosting tiny websites easy.</p>
 <p>To host the heatmaps on google cloud, create an html file by knitting
 a small markdown file or converting a jupyter notebook with them in it.
 We have done this and created “metadata_correctness.html”. Once we have
@@ -802,10 +800,17 @@ access with the link: <a href="http://name_of_bucket.storage.googleapis.com/name
 <h1>Conclusion</h1>
 <p>Now we have created restricted metadata entry sheets which multiple
 people can contribute to online, and we have a method for checking
-whether these were filled out correctly. As they are online and
-available to all collaborators, this method should help prevent siloing
-of bioinformaticians, medical staff, and experimentalists, and it
-streamlines large-scale collection of metadata from collaborators.</p>
+whether these were filled out correctly. Google Sheets also has built-in
+version control, so if anything goes awry, the rewind button is
+built-in. As they are online and available to all collaborators, this
+method should help prevent siloing of bioinformaticians, medical staff,
+and experimentalists, and it streamlines large-scale collection of
+metadata from collaborators.</p>
+<p>Once we have collected all of this data in Google Sheets, we can use
+other functions in the package to download and analyze the metadata
+alone, or attach it to anndata objects using the key column for each tab
+(dataset_id, donor_id, sample_id, author_cell_type).</p>
+<p>More on that soon.</p>
 <p>If you have any suggestions or questions regarding the pipeline, they
 are more than welcome! Thanks for reading.</p>
 </div>

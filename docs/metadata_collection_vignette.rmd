@@ -20,25 +20,26 @@ Sys.setenv(RETICULATE_PYTHON = "/Users/kylekimler/pyenvs/metamanager/bin/python"
 Human experiments often have a complex design and a great deal of clinical covariates which can affect analysis. 
 The collection of these covariates can be a difficult process because they span multiple experimental levels. 
 This is especially true in single-cell experiments, where thousands of cells are collected per sample, and sometimes multiple samples are collected per individual.
+Here, we use the term *metadata* to refer to any variable related to the dataset, participant, sample, cell or gene except the core cellxgene expression matrix. 
 It is critical to organize these metadata sufficiently, and if we want to bring in prior data, we need to create or follow a standard metadata format to be able to make comparisons.
 When analyzing published data, required metadata fields are sometimes unavailable, so it is necessary to reach out to the authors of published data. 
-When reaching out, providing a standardized metadata sheet can help skip redundant metadata wrangling. 
+When reaching out, providing an online standardized metadata sheet improves accuracy, skips redundant data wrangling steps, and enhances collaboration. 
 
 In this vignette, I will demonstrate methods for collecting and harmonizing metadata for human single-cell experiments on an atlas level using Google Sheets.
 We use this collection process in the HCA integrated gut cell atlas project.
 
 ## Design of Metadata
 
-The HCA provides a required metadata schema that also includes metadata fields required by CELLxGENE. The HCA metadata guidelines can be quite confusing [https://data.humancellatlas.org/metadata].
-Essentially, these follow similar guidelines to CELLxGENE, which is more simply detailed here [https://cellxgene.cziscience.com/docs/032__Contribute%20and%20Publish%20Data] in terms of single-cell data analysis.
-We adhere to this schema to make dataset upload to the portals easier. The following portals increase public data accessibility and offer unique methods.
+The HCA provides a required metadata schema that also includes metadata fields required by CELLxGENE. The HCA metadata guidelines are highly detailed (https://data.humancellatlas.org/metadata).
+The HCA follows similar guidelines to CELLxGENE, which is more simply detailed here (https://cellxgene.cziscience.com/docs/032__Contribute%20and%20Publish%20Data) in terms of single-cell data analysis.
+We adhere to both schema to make dataset upload to the portals easier. The following portals increase public data accessibility and offer unique methods.
 
-- (CELLxgene)[https://cellxgene.cziscience.com/]: A highly optimized/efficient app for working with single-cell data
-- (HCA)[https://data.humancellatlas.org/]: A platform for storing data for use in meta-atlases
-- (CAP)[https://celltype.info]: An analysis app similar to CELLxGENE with a focus on crowd-sourcing celltype annotations
+- *CZI*: [CELLxGENE.cziscience.com](https://cellxgene.cziscience.com/): A highly optimized/efficient app for working with single-cell data
+- *HCA*: [data.humancellatlas.org](https://data.humancellatlas.org/): A platform for storing data for use in meta-atlases
+- *CAP*: [celltype.info](https://celltype.info): An analysis app similar to CELLxGENE with a focus on crowd-sourcing celltype annotations
 
 The metadata schema used by these platforms has several useful delineations - one is separation of patient-protected and tissue-specific metadata fields from common-to-all human experiments metadata fields.
-HCA terms these "Tier 1" and "Tier 2" metadata, respectively. 
+HCA terms these Tier 1 (common metadata) and Tier 2 (patient-protected and tissue-specific). 
 
 Some fields in the schema are coded according to standards decided by large international bioinformatic consortia like the EBI ontology Service [https://www.ebi.ac.uk/ols4/],
 These are outlined on the metadata schema above, while others accept free text. 
@@ -62,7 +63,7 @@ We can do both by creating a google sheet where metadata are defined and allowed
 The google sheet format allows for collaborative editing, and rigid definitions make downstream analysis much easier.
 
 Beyond codes and ontology schema, most metadata fields can be standardized to some degree.
-For example, fields like "manner_of_death" are coded to fit a standard, 
+For example, fields like "sample_collection_method" are coded to fit a standard, 
 others like "development_stage_ontology_term_id" must adhere to a 10-year age range in tier 1 metadata to avoid identification,
 while others like "library_id" must follow a certain pattern like a string with no special characters.
 
@@ -199,7 +200,7 @@ Since the google sheets are accessible online, anyone can edit them to help out,
 and we can provide guidance by loading them from their URL's and determining whether they are correct and complete.
 
 For the entries that have dropdown menus, we can simply check if they were filled out or not, while for free text entries,
-we can check if they match some pattern or are strings or integers to determine if the entered values follow HCA requirements and do not contain special characters.
+we can check if they match some pattern or are strings or integers to determine if the entered values follow HCA requirements, do not contain special characters, or fit other expected criteria
 
 ```{python list google sheets google sheet, echo = TRUE}
 # First, specify the folder where we will download all our metadata entry google sheets
@@ -367,7 +368,7 @@ for metadata_type, df in metadata.items():
 ## Step 5: Instant feedback for metadata entry completeness
 
 To provide instant feedback for metadata contributors, we can upload these graphs to a simple website. 
-At CDN we use Google Cloud, which makes hosting tiny websites easy. 
+At the Cell Discovery Network, we use Google Cloud, which makes hosting tiny websites easy. 
 
 To host the heatmaps on google cloud, create an html file by knitting a small markdown file or converting a jupyter notebook with them
 in it. We have done this and created "metadata_correctness.html". Once we have the html, we can host it with GCP.
@@ -388,7 +389,12 @@ http://hca_gut_cell_atlas.storage.googleapis.com/metadata_correctness.html
 # Conclusion
 
 Now we have created restricted metadata entry sheets which multiple people can contribute to online, and we have a method for checking whether these were filled out correctly. 
+Google Sheets also has built-in version control, so if anything goes awry, the rewind button is built-in.
 As they are online and available to all collaborators, this method should help prevent siloing of bioinformaticians, medical staff, and experimentalists,
 and it streamlines large-scale collection of metadata from collaborators. 
+
+Once we have collected all of this data in Google Sheets, we can use other functions in the package to download and analyze the metadata alone, or attach it to anndata objects using the key column for each tab (dataset_id, donor_id, sample_id, author_cell_type).
+
+More on that soon.
 
 If you have any suggestions or questions regarding the pipeline, they are more than welcome! Thanks for reading.
