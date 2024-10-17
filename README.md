@@ -8,7 +8,7 @@ A set of google drive API functions in python for collecting and harmonizing exp
 ### Standard Installation
 To install the package, run the following command:
 ```bash
-pip install git+https://github.com/CellDiscoveryNetwork/HCA-MetaManager.git
+pip install git+https://github.com/CellDiscoveryNetwork/MetaManager.git
 ```
 
 ### Development Installation
