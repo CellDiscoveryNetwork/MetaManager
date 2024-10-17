@@ -8,7 +8,7 @@ Brief description of what your package does.
 ### Standard Installation
 To install the package, run the following command:
 ```bash
-pip install git+https://github.com/kylekimler/HCA-MetaManager.git
+pip install git+https://github.com/CellDiscoveryNetwork/HCA-MetaManager.git
 ```
 
 ### Development Installation
