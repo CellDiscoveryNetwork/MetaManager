@@ -1,7 +1,7 @@
 # HCA Metadata Manager
 
 ## Description
-Brief description of what your package does.
+A set of google drive API functions in python for collecting and harmonizing experimental metadata. Input is a google sheet defined by a bionetwork or experimenter that defines metadata fields and allowed values for those fields. The functions here can help you generate empty metadata entry google sheets formatted with dropdown menus and descriptions of metadata to distribute to authors of experiments (as we do in the HCA). Also included are functions to help prefill these metadata entry sheets. 
 
 ## Installation
 
