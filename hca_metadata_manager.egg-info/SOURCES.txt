@@ -1,6 +1,7 @@
 MANIFEST.in
 README.md
 setup.py
+data/.DS_Store
 data/metadata_descriptions.csv
 data/pbmc3k_processed.h5ad
 hca_metadata_manager/__init__.py

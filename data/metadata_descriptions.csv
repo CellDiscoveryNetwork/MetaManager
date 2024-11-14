@@ -1,32 +1,163 @@
-,sample_id,title,doi,donor_id,protocol_url,institute,contact_email,sample_collection_site,sample_collection_time_point	,sample_collection_relative_time_point,library_id,library_id_repository,author_batch_notes,organism_ontology_term_id,manner_of_death,sample_source,sex_ontology_term_id,sample_collection_method,tissue_type,sampled_site_condition,tissue_ontology_term_id,tissue_ontology_term,radial_tissue_term,tissue_free_text,sample_preservation_method,suspension_type,cell_enrichment,cell_viability_percentage,cell_number_loaded,sample_collection_year,assay_ontology_term_id,assay_ontology_term,library_preparation_batch,library_sequencing_run,sequenced_fragment,sequencing_platform,is_primary_data,reference_genome,gene_annotation_version,alignment_software,intron_inclusion,ambient_count_correction,doublet_detection,disease_free_text,disease_ontology_term_id,self_reported_ethnicity_ontology_term_id,development_stage_ontology_term_id,age_range,study_pi,batch_condition,default_embedding,comments,author_cell_type,cell_type_ontology_term_id,disease_ontology_term,disease_ontology_term_id,disease_free_text,disease_location,self_reported_ethnicity,known_gut_related_disease,gut_related_disease_familial_history,radial_tissue_term,indication_for_sampling,macroscopic_appearance,age,age_unit,height,weight,bmi,smoking_status,smoking_pack_years,years_since_smoking_cessation,alcohol_history,alcohol_type,alcohol_usage_duration,alcohol_units,medications,medical test results,previous_surgery,comorbidities,nutritional_state,defined_diet,dietary_state,procedure,clinical_activity_score,score_name
-Description,"Identification number of the sample. This is the fundamental unit of sampling the tissue (the specimen taken from the subject), which can be the same as the 'subject_ID', but is often different if multiple samples are taken from the same subject. Note: this is NOT a unit of multiplexing of donor samples, which should be stored in ""library"".",This text describes and differentiates the dataset from other datasets in the same collection. It is strongly recommended that each dataset title in a collection is unique and does not depend on other metadata such as a different assay to disambiguate it from other datasets in the collection.,The DOI of the associated paper (if there is one),This must be free-text that identifies a unique individual that data were derived from.,"The protocols.io URL (if none exists, please use the BioRxiv URL) for the full experimental protocol; or if multiple protocols exist please list them e.g. sample preparation protocol / sequencing protocol.",Institution where the samples were processed.,The email of a contact person for the dataset. Either from the paper or correspondence,The pseudonymised name of the site where the sample was collected.,The date the sample was collected,"Time point when the sample was collected. This field is only needed if multiple samples from the same subject are available and collected at different time points. Sample collection dates (e.g. 23/09/22) cannot be used due to patient data protection, only relative time points should be used here (e.g. day3).",The unique ID that is used to track libraries in the investigator's institution (should align with the publication).,"The unique ID used to track libraries from one of the following public data repositories: EGAX*, GSM*, SRX*, ERX*",Encoding of author knowledge on any further information related to likely batch effects.,"The name given to the type of organism, collected in NCBITaxon:0000 format.","Manner of death classification based on the Hardy Scale or 'unknown' or 'not applicable':
+,dataset_id,donor_id,sample_id,description,consortia,institute,contact_email,publication_doi,organism_ontology_term_id ,manner_of_death,sex_ontology_term,sex_ontology_term_id,sample_source,,disease_ontology_term,disease_ontology_term_id,tissue_ontology_term_id,tissue_ontology_term,tissue_free_text,radial_tissue_term,dissociation_protocol,protocol_url,indication_for_sampling,macroscopic_appearance,age,age_unit,height,weight,bmi,smoking_status,smoking_pack_years,years_since_smoking_cessation,alcohol_history,alcohol_type,alcohol_usage_duration,alcohol_units,medications,medical test results,previous_surgery,comorbidities,nutritional_state,defined_diet,dietary_state,procedure,sample_collection_year,sample_preservation_method,sample_collection_method,tissue_type,sampled_site_condition,suspension_type,cell_enrichment,assay_ontology_term_id,assay_ontology_term,library_preparation_batch,library_id,library_id_repository,sample_collection_site,library_sequencing_run,sequenced_fragment,sequencing_platform,sample_collection_relative_time_point,cell_viability_percentage,cell_number_loaded,is_primary_data,reference_genome,gene_annotation_version,alignment_software,intron_inclusion,ambient_count_correction,doublet_detection,disease_free_text,disease_ontology_term_id,self_reported_ethnicity_ontology_term_id,development_stage_ontology_term_id,age_range,study_pi,batch_condition,author_batch_notes,default_embedding,comments,author_cell_type,cell_type_ontology_term_id,closest_GCA_celltype,disease_ontology_term,disease_ontology_term_id,disease_free_text,disease_location,known_gut_related_disease,gut_related_disease_familial_history,macroscopic_appearance,age,age_unit,height,weight,bmi,self_reported_ethnicity,smoking_status,smoking_pack_years,years_since_smoking_cessation,alcohol_history,alcohol_type,alcohol_usage_duration,alcohol_units,medications,medical test results,previous_surgery,comorbidities,nutritional_state,defined_diet,dietary_state,procedure,clinical_activity_score,clinical_activity_score_name,radial_tissue_term
+description,a unique identifier for each dataset in the study. This should be unique to the study,"a unique identifier for each donor or study participant with a relative timepoint as a suffix, separated by ""_"", if any longitudinal sampling of the same donor was performed. These identifiers should be unique to your study. For example, R can denote a single Return sampling, or if multiple, t1, t2, t3, etc.",A unique identifier for each sample in the study. These should be unique to your dataset,Short description of the dataset,"List relevant consortia, specifically HCA",Institution where the samples were processed,Contact name and email of the submitting person,"The publication digital object identifier (doi) for the protocol. If no pre-print nor publication exists, please write 'not applicable'.","The name given to the type of organism, collected in NCBITaxon:0000 format.","Manner of death classification based on the Hardy Scale or 'unknown' or 'not applicable':
 Category 1 = Violent and fast death Deaths due to accident, blunt force trauma or suicide, terminal phase estimated at < 10 min. 
 Category 2 = Fast death of natural causes  -Sudden unexpected deaths of people who had been reasonably healthy, after a terminal phase estimated at < 1 hr (with sudden death from a myocardial infarction as a model cause of death for this category) 
 Category 3 = Intermediate death - Death after a terminal phase of 1 to 24 hrs (not classifiable as 2 or 4); patients who were ill but death was unexpected 
 Category 4 = Slow death - Death after a long illness, with a terminal phase longer than 1 day (commonly cancer or chronic pulmonary disease); deaths that are not unexpected 
 Category 0 =Ventilator Case - All cases on a ventilator immediately before death
 Unknown = The cause of death is unknown
-Not applicable = Subject is alive","The study subgroup that the participant belongs to. This indicates whether the participant was a surgical donor (this includes patients providing blood samples or biopsies), a postmortem donor, or an organ donor.",Reported sex of the donor.,The method the sample was physically obtained from the donor. ,"Whether the tissue is ""tissue"", ""organoid"", or ""cell culture"".","Whether the site is considered healthy, diseased or adjacent to disease.","The detailed anatomical location of the sample, please provide a specific UBERON term.",The text name of the UBERON ID used in tissue_ontology_term_id,The text name of the radial tissue location of the gut sample,The detailed anatomical location of the sample - this does not have to tie to an ontology term.,"Indicating if tissue was frozen, or not, at any point before library preparation.",Specifies whether the sample contains single cells or single nuclei data.,Specifies the cell types targeted for enrichment or depletion beyond the selection of live cells. ,"If measured, per sample cell viability before library preparation (as a percentage).",Estimated number of cells loaded for library construction.,"Year of sample collection. Should not be detailed further(to exact month and day), to prevent identifiability.",Platform used for single cell library construction.,text corresponding to the name of the ontology_term_id in assay_ontology_term_id,"Indicating which samples' libraries were prepared in the same chip/plate/etc., e.g. batch1, batch2.",The identifier (or accession number) that indicates which samples' libraries were sequenced in the same run.,Which part of the captured read was sequenced.,Platform used for sequencing.,This must be True if this is the canonical instance of this cellular observation and False if not. This is commonly False for meta-analyses reusing data or for secondary views of data.,Reference genome used for alignment.,Ensembl release version accession number.,"Protocol used for alignment analysis, please specify which version was used e.g. cell ranger 2.0, 2.1.1 etc.",Were introns included during read counting in the alignment process?,"Was ambient count correction software used during cellxgene processing?  if so, which software?","Was doublet detection software used during cellxgene processing?  if so, which software?","free text to include any disease or known pre-existing condition of patients in the study, even if thought not to be involved in the sample","In the case of disease, please submit a higher order ontology term - this is especially important in the case of rare disease. 
+Not applicable = Subject is alive",Reported sex of the donor.,"Reported sex of the donor. This must be a child of PATO:0001894 for phenotypic sex or ""unknown"" if unavailable.","The study subgroup that the participant belongs to. This indicates whether the participant was a surgical donor (this includes patients providing blood samples or biopsies), a postmortem donor, or an organ donor. One of: surgical donor; postmortem donor; living organ donor",,the name of the disease ontology term ID,the disease ontology term as listed in the EBI disease ontologies https://www.ebi.ac.uk/ols4/ontologies/mondo,"The detailed anatomical location of the sample, please provide a specific UBERON term. If tissue_type is ""tissue"" or ""organoid"", this must be the most accurate child of UBERON:0001062 for anatomical entity. If tissue_type is ""cell culture"" this must follow the requirements for cell_type_ontology_term_id.",The text name of the UBERON ID used in tissue_ontology_term_id,The detailed anatomical location of the sample - this does not have to tie to an ontology term.,"The layer of the gut that was sequenced. This depends on the chemical digestion used. The chemical digestion methods should be collected in the ""protocol"" and ""process"" fields.",Dissocation chemicals used during sample preparation,"The protocols.io URL (if none exists, please use the BioRxiv URL) for the full experimental protocol; or if multiple protocols exist please list them e.g. sample preparation protocol / sequencing protocol.",The medical reason for why the donor was sampled,The macroscopic appearance of the tissue sampled,"The age in age_unit (see right) of the donor. If >24 weeks, use months. If > 2 years, use years.",The unit of time for which the age is annotated,The height of the donor in centimeters,The weight of the donor in kilograms,The body mass index of the donor. This can be automatically filled in using height and weight or entered manually if known,Does the donor have a history of tobacco use?,"number of packs per day for an entire year of life. For example, if the donor smoked 1 pack per day for 3 years, it would be 3",The number of years since the donor quit smoking,Does the donor have a history of alcohol use?, Types of alcoholic beverages consumed,number of years the donor has used any alcohol,Frequency and quantity of alcohol intake per week.,"current gut disease related medications taken by the donor, encoded as generic names",gut relevant medical test results associated with the sampling at the time of sampling ,any previous gut surgery undertaken by the donor,"any additional diseases the donor has at time of sampling, encoded by MONDO disease ontology terms",Whether or not the donor was fasting or on a feeding tube at the time of sampling,if the donor was on a defined diet at time of sampling,Which defined diet was the donor on?,What procedure did the donor undergo for gut sampling?,"Year of sample collection. Should not be detailed further(to exact month and day), to prevent identifiability.","Indicating if tissue was frozen, or not, at any point before library preparation. Please do not use empty spaces. ambient temperature; cut slide; fresh; frozen at -70C; frozen at -80C; frozen at -150C; frozen in liquid nitrogen; frozen in vapor phase; paraffin block; RNAlater at 4C; RNAlater at 25C; RNAlater at -20C; other",The method the sample was physically obtained from the donor. One of: brush; scraping; biopsy; surgical resection; blood draw; body fluid; other,"Whether the tissue is ""tissue"", ""organoid"", or ""cell culture"". One of: UBERON:0001828; UBERON:0000966","Whether the site is considered healthy, diseased or adjacent to disease. One of: healthy; diseased; adjacent",Specifies whether the sample contains single cells or single nuclei data.,"Specifies the cell types targeted for enrichment or depletion beyond the selection of live cells. This must be a Cell Ontology (CL) term (http://www.ebi.ac.uk/ols4/ontologies/cl). For cells that are enriched, list the CL code followed by a ""+"". For cells that were depleted, list the CL code followed by a ""-"". If no enrichment or depletion occurred, please use 'na' (not applicable)",Platform used for single cell library construction.,text corresponding to the name of the ontology_term_id in assay_ontology_term_id,"Indicating which samples' libraries were prepared in the same chip/plate/etc., e.g. batch1, batch2.",The unique ID that is used to track libraries in the investigator's institution (should align with the publication).,"The unique ID used to track libraries from one of the following public data repositories: EGAX*, GSM*, SRX*, ERX*","The pseudonymised name of the site where the sample was collected. It is strongly recommended that this identifier be designed so that it is unique to a given site within the collection of datasets that includes this site (for example, the labels 'site1', 'site2' may appear in other datasets thus rendering them indistinguishable).",The identifier (or accession number) that indicates which samples' libraries were sequenced in the same run.,Which part of the captured read was sequenced.,Platform used for sequencing.,"Time point when the sample was collected. This field is only needed if multiple samples from the same subject are available and collected at different time points. Sample collection dates (e.g. 23/09/22) cannot be used due to patient data protection, only relative time points should be used here (e.g. day3).","If measured, per sample cell viability before library preparation (as a percentage).",Estimated number of cells loaded for library construction.,This must be True if this is the canonical instance of this cellular observation and False if not. This is commonly False for meta-analyses reusing data or for secondary views of data.,Reference genome used for alignment.,Ensembl release version accession number.,"Protocol used for alignment analysis, please specify which version was used e.g. cell ranger 2.0, 2.1.1 etc.",Were introns included during read counting in the alignment process?,"Was ambient count correction software used during cellxgene processing?  if so, which software?","Was doublet detection software used during cellxgene processing?  if so, which software?","free text to include any disease or known pre-existing condition of patients in the study, even if thought not to be involved in the sample","In the case of disease, please submit a higher order ontology term - this is especially important in the case of rare disease. 
 
 
 ","Self reported ethnicity. 
 HCA therefore recommends that you put 'unknown' for this field. 
 ","Age of the subject. 
 HCA requests that you submit ‘unknown’ or use the age bracket ontology terms provided, rather than providing exact years.
-","age range of the subject in 10 year increments, not needed if development_stage_ontology_term_id is included. At younger ages, a 5 year range",Principal Investigator(s) leading the study where the data is/was used.,"Values must refer to cell metadata keys in obs. Together, these keys define the batches that a normalization or integration algorithm should be aware of. For example if ""patient"" and ""seqBatch"" are keys of vectors of cell metadata, either [""patient""], [""seqBatch""], or [""patient"", ""seqBatch""] are valid values.",The value must match a key to an embedding in obsm for the embedding to display by default in CELLxGENE Explorer.,Other technical or experimental covariates that could affect the quality or batch of the sample. Must not contain identifiers. This field is designed to capture potential challenges for data integration not captured elsewhere.,Highest resolution author-provided celltype for translation to celltype ontology,the closest cell type ontology label to the highest level author provided celltype annotation,the name of the disease ontology term ID,the disease ontology term as listed in the EBI disease ontologies https://www.ebi.ac.uk/ols4/ontologies/mondo,a free text entry to describe diseases of the donor beyond the disease ontology term. This can be used to add more specific information about disease subtypes or fill in if disease ontology does not include the term you seek,The tissue ontology term of the tissue section affected by the disease noted in disease columns,The self reported ethnicity of the donor,"Any gut related disease the donor has, encoded using the MONDO disease ontology terms. This can be automatically filled in by GCA based on disease ontology terms to the left if left blank","Is there a gut related disease in the donor’s family? If so, note the disease","EPI: epithelia
-LP: lamina propria
-MUSC: muscularis
-SUB: submucosa
-EPI_LP_MUSC
-EPI_LP
-LP_MUSC
-MLN: mesenteric lymph node",The medical reason why the donor was sampled,The macroscopic appearance of the tissue sampled,"The age in age_unit (see right) of the donor. If >24 weeks, use months. If > 2 years, use years.",The unit of time for which the age is annotated,The height of the donor in centimeters,The weight of the donor in kilograms,The body mass index of the donor. This can be automatically filled in using height and weight or entered manually if known,Does the donor have a history of tobacco use?,"number of packs per day for an entire year of life. For example, if the donor smoked 1 pack per day for 3 years, it would be 3",The number of years since the donor quit smoking,Does the donor have a history of alcohol use?,Types of alcoholic beverages consumed,number of years the donor has used any alcohol,Frequency and quantity of alcohol intake per week.,"current gut disease related medications taken by the donor, encoded as generic names",gut relevant medical test results associated with the sampling at the time of sampling,any previous gut surgery undertaken by the donor,"any additional diseases the donor has at time of sampling, encoded by MONDO disease ontology terms",Whether or not the donor was fasting or on a feeding tube at the time of sampling,if the donor was on a defined diet at time of sampling,Which defined diet was the donor on?,What procedure did the donor undergo for gut sampling?,Is there a clinical activity score for the disease mentioned?,Which clinical activity score was used?
-Values,N/A, - ,DOI without any prefix,"It is strongly recommended that this identifier be designed so that it is unique to: a given individual within the collection of datasets that includes this dataset, and a given individual across all collections in CELLxGENE Discover.
-
-It is strongly recommended that ""pooled"" be used for observations from a sample of multiple individuals that were not confidently assigned to a single individual through demultiplexing.
-
-It is strongly recommended that ""unknown"" ONLY be used for observations in a dataset when it is not known which observations are from the same individual.",N/A,N/A,kkimler@broadinstitute.org,"It is strongly recommended that this identifier be designed so that it is unique to a given site within the collection of datasets that includes this site (for example, the labels 'site1', 'site2' may appear in other datasets thus rendering them indistinguishable).",year_month_day,N/A,N/A,N/A,N/A,"""NCBITaxon:9606"" for Homo sapiens or ""NCBITaxon:10090"" for Mus musculus.",1; 2; 3; 4; 0; unknown; not applicable,surgical donor; postmortem donor; living organ donor,"This must be a child of PATO:0001894 for phenotypic sex or ""unknown"" if unavailable.",brush; scraping; biopsy; surgical resection; blood draw; body fluid; other,tissue; organoid; cell culture,healthy; diseased; adjacent,"If tissue_type is ""tissue"" or ""organoid"", this must be the most accurate child of UBERON:0001062 for anatomical entity. If tissue_type is ""cell culture"" this must follow the requirements for cell_type_ontology_term_id.",gingiva; retina,"one of lamina propria (LP), mucosal epithelium (EPI), muscularis (MUSC) or submucosa (SUB). If these do not fit your data, provide a suggestion here",N/A,ambient temperature; cut slide; fresh; frozen at -70C; frozen at -80C; frozen at -150C; frozen in liquid nitrogen; frozen in vapor phase; paraffin block; RNAlater at 4C; RNAlater at 25C; RNAlater at -20C; other,"This must be ""cell"", ""nucleus"", or ""na"".
-This must be the correct type for the corresponding assay:
+","age range of the subject in 10 year increments, not needed if development_stage_ontology_term_id is included. At younger ages, a 5 year range","Principal Investigator(s) leading the study where the data is/was used. Last name,first name, with no spacing","Batch_condition should be the fields among the metadata that describe batch-differences in the data. Values must refer to cell metadata keys in obs. Together, these keys define the batches that a normalization or integration algorithm should be aware of. For example if ""donor_id"" and ""library_id"" are keys of vectors of cell metadata, either [""donor_id""], [""library_id""], or [""donor_id"", ""library_id""] are valid values.","Here, authors can give additional information about batches that don't fit into the batch_condition column. ",The value must match a key to an embedding in obsm for the embedding to display by default in CELLxGENE Explorer.,Other technical or experimental covariates that could affect the quality or batch of the sample. Must not contain identifiers. This field is designed to capture potential challenges for data integration not captured elsewhere.,Highest resolution author-provided celltype for translation to celltype ontology. These should be annotated exactly as they were in the publication,the closest cell type ontology label to the highest level author provided celltype annotation,the closest GCA celltype in the GCA hierarchy to the author annotation,the name of the disease ontology term ID,the disease ontology term as listed in the EBI disease ontologies https://www.ebi.ac.uk/ols4/ontologies/mondo,a free text entry to describe diseases of the donor beyond the disease ontology term. This can be used to add more specific information about disease subtypes or fill in if disease ontology does not include the term you seek,The tissue ontology term of the tissue section affected by the disease noted in disease columns,"Any gut related disease the donor has, encoded using the MONDO disease ontology terms. This can be automatically filled in by GCA based on disease ontology terms to the left if left blank","Is there a gut related disease in the donor’s family? If so, note the disease",The macroscopic appearance of the tissue sampled,"The age in age_unit (see right) of the donor. If >24 weeks, use months. If > 2 years, use years.",The unit of time for which the age is annotated,The height of the donor in centimeters,The weight of the donor in kilograms,The body mass index of the donor. This can be automatically filled in using height and weight or entered manually if known,"Self reported ethnicity. For privacy, if you are unable to submit this must be 'unknown'.",Does the donor have a history of tobacco use?,"number of packs per day for an entire year of life. For example, if the donor smoked 1 pack per day for 3 years, it would be 3",The number of years since the donor quit smoking,Does the donor have a history of alcohol use?, Types of alcoholic beverages consumed,number of years the donor has used any alcohol,Frequency and quantity of alcohol intake per week.,"current gut disease related medications taken by the donor, encoded as generic names",gut relevant medical test results associated with the sampling at the time of sampling ,any previous gut surgery undertaken by the donor,"any additional diseases the donor has at time of sampling, encoded by MONDO disease ontology terms",Whether or not the donor was fasting or on a feeding tube at the time of sampling,if the donor was on a defined diet at time of sampling,Which defined diet was the donor on?,What procedure did the donor undergo for gut sampling?,Is there a clinical activity score for the disease mentioned?,Which clinical activity score was used?,"The layer of the gut that was sequenced. This depends on the chemical digestion used. The chemical digestion methods should be collected in the ""protocol"" and ""process"" fields."
+examples,PREDICT; UCrewiring; TabulaSapiens_Duodenum,project_donor1_t0; project_donor2_t0; project_donor3_t0; project_donor1_r1; project_donor1_r2;,project_donor1_colon; project_donor1_duodenum; project_donor1_t0_duodenum,A single-cell dataset of intestinal biopsies of 45 adults with Chrohn's disease and 12 controls.,HCA,EMBL-EBI; Genome Institute of Singapore,"Polly Bloggs, pbloggs@gmail.com",10.1016/j.cell.2016.07.054,NCBITaxon:9606,1,female,PATO:0000383,postmortem donor,,"healthy
+crohns_disease
+functional_gastrointestinal_disorder
+ulcerative_colitis
+colorectal_cancer
+intestinal_cancer
+ileal_atresia
+necrotizing_enterocolitis
+cystic_fibrosis_associated_meconium_ileus
+colonic_atresia
+polyposis
+chemical_colitis
+barretts_esophagus
+digestive_system_disorder","PATO:0000461
+MONDO:0005011
+MONDO:0004335
+MONDO:0005101
+MONDO:0005575
+MONDO:0005814
+HP:0011102
+MONDO:0005313
+MONDO:0005413
+MONDO:0010562
+MONDO:0000147
+MONDO:0000706
+MONDO:0013662
+MONDO:0004335",UBERON:0001828; UBERON:0000966,gingiva; retina,terminal ileum,EPI; LP; MUSC; SUB; MLN,trypsin; trypLE; collagenase; ,https://www.biorxiv.org/conte nt/early/2017/09/24/193219,"suspected_IBD
+suspected_cancer
+organ_donor
+N/A","healthy
+inflamed
+ulcerated
+strictured
+polyp
+erythema","1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16","years
+months
+weeks",162.5,62.2,23.6,"active
+former
+never","1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13","1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13","active
+former
+never","beer
+liquor
+wine","1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13",,"aTNF
+aIL12/23
+aIL23
+aa4b7
+JAK_inhibitors
+S1P_receptor_modulators
+aIL17
+Steroid
+NSAID
+5-ASA
+Prokinetics
+Antibiotics
+H2-Blockers
+PPIs
+aGLP1
+FMT
+Antispasmodics
+Checkpoint_inhibitors
+Probiotics
+Fiber
+Antidepressants
+Immunotherapies
+Chemotherapies
+Radiation
+Antivirals
+other_biologics","high_CRP
+high_blood_pressure
+low_TSH","gut_resection
+coleostomy
+gastric_bypass
+other_stoma","heart_disease
+stroke
+diabetes
+cancer","normal
+fasting
+feeding_tube","yes
+no","gluten_free
+fodmap
+baby_formula
+breastfeeding
+elimination
+keto
+paleo
+vegan
+vegetarian
+omnivore","endoscopy
+colonoscopy
+thoracic_surgery
+laporoscopic_surgery
+postmortem",N/A; 2021; 2022; 2023; 2024,fresh; frozen_-70C; RNAlater_25C,biopsy,UBERON:0001828,diseased,"""cell"", ""nucleus"", or ""na"".
+If in doubt, check the corresponding assay:
 10x transcription profiling [EFO:0030080] and its children = ""cell"" or ""nucleus""
 ATAC-seq [EFO:0007045] and its children = ""nucleus""
 BD Rhapsody Whole Transcriptome Analysis [EFO:0700003] = ""cell""
@@ -36,7 +167,8 @@ CITE-seq [EFO:0009294] and its children = ""cell""
 DroNc-seq [EFO:0008720] = ""nucleus""
 Drop-seq [EFO:0008722] = ""cell"" or ""nucleus""
 GEXSCOPE technology [EFO:0700011] = ""cell"" or ""nucleus""
-inDrop [EFO:0008780] = ""cell"" or ""nucleus""","This must be a Cell Ontology (CL) term (http://www.ebi.ac.uk/ols4/ontologies/cl). For cells that are enriched, list the CL code followed by a ""+"". For cells that were depleted, list the CL code followed by a ""-"". If no enrichment or depletion occurred, please use 'na' (not applicable)",N/A,N/A,N/A,"This must be an EFO term and either:
+inDrop [EFO:0008780] = ""cell"" or ""nucleus""""
+cell; nucleus; na",CL:0000057+; na,"This must be an EFO term and either:
 ""EFO:0002772"" for assay by molecule or preferably its most accurate child
 ""EFO:0010183"" for single cell library construction or preferably its most accurate child
 An assay based on 10X Genomics products should either be ""EFO:0008995"" for 10x technology or preferably its most accurate child. An assay based on SMART (Switching Mechanism at the 5' end of the RNA Template) or SMARTer technology SHOULD either be ""EFO:0010184"" for Smart-like or preferably its most accurate child.
@@ -47,7 +179,12 @@ Recommended:
 10x 5' v1        ""EFO:0011025""
 10x 5' v2        ""EFO:0009900""
 Smart-seq2        ""EFO:0008931""
-Visium Spatial Gene Expression        ""EFO:0010961""",,N/A,N/A,3 prime tag; 3 prime end bias; 5 prime tag; 5 prime end bias; full length,"""subClassOf"" : [""EFO:0002699""] - https://www.ebi.ac.uk/ols/ontologies/efo/terms?iri=http%3A%2F%2Fwww.ebi.ac.uk%2Fefo%2FEFO_0002699",true; false,GRCh38; GRCh37; GRCm39; GRCm38; GRCm37; not applicable,http://www.ensembl.org/info/website/archives/index.html) or NCBI/RefSeq,N/A,yes; no,none; soupx; cellbender,none; doublet_finder; manual,obesity; colorectal_cancer; none,"This must be a MONDO term or ""PATO:0000461"" for normal or healthy.","Self reported ethnicity. HCA will be collecting ethnicity data as part of HCA’s Tier 2 metadata that is protected by managed access, therefore please put 'unknown' for this field.","If organism_ontolology_term_id is ""NCBITaxon:9606"" for Homo sapiens, this should be an HsapDv term.
+Visium Spatial Gene Expression        ""EFO:0010961""","10x 3' v2 
+10x 3' v3 
+10x 5' v1 
+10x 5' v2 
+Smart-seq2
+Visium Spatial Gene Expression",library1; library2; library3,A24; NK_healthy_001,GSM1684095,AIDA_site_1; AIDA_site_2,chip1; chip2; chip_aug; chip_sept,3 prime tag; 3 prime end bias; 5 prime tag; 5 prime end bias; full length,"""subClassOf"" : [""EFO:0002699""] - https://www.ebi.ac.uk/ols/ontologies/efo/terms?iri=http%3A%2F%2Fwww.ebi.ac.uk%2Fefo%2FEFO_0002699",sampleX_day1,88; 95; 93.5,5000; 4000,true; false,GRCh38; GRCh37; GRCm39; GRCm38; GRCm37; not applicable,http://www.ensembl.org/info/website/archives/index.html) or NCBI/RefSeq,cellranger_v7.0,yes; no,none; soupx; cellbender,none; doublet_finder; manual,obesity; colorectal_cancer; none,"This must be a MONDO term or ""PATO:0000461"" for normal or healthy.","Self reported ethnicity. HCA will be collecting ethnicity data as part of HCA’s Tier 2 metadata that is protected by managed access, therefore please put 'unknown' for this field.","If organism_ontolology_term_id is ""NCBITaxon:9606"" for Homo sapiens, this should be an HsapDv term.
 
 Age bracket ontology terms: 
 Unknown = unknown
@@ -62,7 +199,7 @@ Years 40-49 HsapDv:0000239
 Years 50-59 HsapDv:0000240
 Years 60-69 HsapDv:0000241
 Years 70-79 HsapDv:0000242
-Years 80-89 HsapDv:0000243",0-5; 5-10; 10-15; 15-20; 20-30; 30-40; 40-50; 50-60; 60-70, - , - , - , - ,-,-,"healthy
+Years 80-89 HsapDv:0000243",0-5; 5-10; 10-15; 15-20; 20-30; 30-40; 40-50; 50-60; 60-70,"Kean,Leslie; Shalek,Alex; OrdovasMontanes,Jose","donor_id; [""donor_id"", ""library_id""]","multiplexing was performed on samples A and B, but not C",umap; tsne; pca,"samples A, B, and C were delivered by submarine from Vanuatu to Paris",Follicular dendritic cell; tissue resident macrophage; BEST4 enterocyte; Tuft cell,CL:0000442; CL:0000864; CL:4030026; CL:0009020,"refer to the GCA gut cell type hierarcy reference for more information on marker genes, ontology labels, and placement in the hierarchy: https://docs.google.com/spreadsheets/d/1FdNt_dZ3ncbOly-7HyTKO9GBdvm9cqTPlI2g9uby0_Y/edit?gid=0#gid=0","healthy
 crohns_disease
 functional_gastrointestinal_disorder
 ulcerative_colitis
@@ -104,7 +241,7 @@ gastrointestinal_system_mesentery
 vermiform_appendix
 mesenteric_lymph_node
 small_intestine
-colon",,"crohns_disease
+colon","crohns_disease
 functional_gastrointestinal_disorder
 ulcerative_colitis
 colorectal_cancer
@@ -112,17 +249,7 @@ covid","crohns_disease
 functional_gastrointestinal_disorder
 ulcerative_colitis
 colorectal_cancer
-covid","EPI
-LP
-MUSC
-EPI_LP_MUSC
-EPI_LP
-LP_MUSC
-MLN
-SUB","suspected_IBD
-suspected_cancer
-organ_donor
-N/A","healthy
+covid","healthy
 inflamed
 ulcerated
 strictured
@@ -144,7 +271,7 @@ erythema","1
 15
 16","years
 months
-weeks",162.5,62.2,23.6,"active
+weeks",162.5,62.2,23.6,unknown,"active
 former
 never","1
 2
@@ -238,8 +365,12 @@ postmortem","1
 2.5
 3","PCDAI
 wPCDAI
-PUCAI"
-Examples,SC24; SC25; SC28,"Cells of the adult human heart collection is ""All — Cells of the adult human heart"".",10.7554/eLife.91792.1,CR_donor_1; MM_donor_1; LR_donor_2,https://www.biorxiv.org/conte nt/early/2017/09/24/193219,EMBL-EBI; Genome Institute of Singapore,kkimler@broadinstitute.org,AIDA_site_1; AIDA_site_2,2022_12_10,sampleX_day1,A24; NK_healthy_001,GSM1684095,Batch run by different personnel on different days,NCBITaxon:9606; NCBITaxon:10090,1; 2; 3; 4; 0; unknown; not applicable,surgical donor; postmortem donor,"PATO:0000383 for female, PATO:0000384 for male",biopsy; brush; surgical resection,tissue; organoid; cell culture,healthy; diseased; adjacent,UBERON:0001828; UBERON:0000966,gingiva; retina,LP; EPI; SUB; MUSC,terminal ileum,fresh; frozen at -70C,cell; nucleus; na,CL:0000057+; na,88; 95; 93.5,5000; 4000,2018,EFO:0009922,10x 3' v3,batch01; batch02,ERR10855815; run1; NV0087,3 prime tag; full length,EFO:0008563,true; false,GRCh38; GRCh37,v110; GCF_000001405.40,cell ranger 3.0.1; kallisto bustools; GSNAP,yes; no,none; soupx; cellbender,none; doublet_finder; manual,obesity; colorectal_cancer; none,MONDO:0005385; PATO:0000461,unknown,HsapDv:0000237; unknown,0-5; 5-10; 10-15; 15-20; 20-30; 30-40; 40-50; 50-60; 60-70,"Sarah,A,Teichmann", - , - , - ,Follicular dendritic cell; tissue resident macrophage; BEST4 enterocyte; Tuft cell,CL:0000442; CL:0000864; CL:4030026; CL:0009020,"healthy
+PUCAI","EPI
+LP
+MUSC
+SUB
+MLN"
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,"healthy
 crohns_disease
 functional_gastrointestinal_disorder
 ulcerative_colitis
@@ -281,7 +412,7 @@ gastrointestinal_system_mesentery
 vermiform_appendix
 mesenteric_lymph_node
 small_intestine
-colon",,"crohns_disease
+colon","crohns_disease
 functional_gastrointestinal_disorder
 ulcerative_colitis
 colorectal_cancer
@@ -289,17 +420,7 @@ covid","crohns_disease
 functional_gastrointestinal_disorder
 ulcerative_colitis
 colorectal_cancer
-covid","EPI
-LP
-MUSC
-EPI_LP_MUSC
-EPI_LP
-LP_MUSC
-MLN
-SUB","suspected_IBD
-suspected_cancer
-organ_donor
-N/A","healthy
+covid","healthy
 inflamed
 ulcerated
 strictured
@@ -321,7 +442,7 @@ erythema","1
 15
 16","years
 months
-weeks",162.5,62.2,23.6,"active
+weeks",162.5,62.2,23.6,unknown,"active
 former
 never","1
 2
@@ -415,4 +536,8 @@ postmortem","1
 2.5
 3","PCDAI
 wPCDAI
-PUCAI"
+PUCAI","EPI
+LP
+MUSC
+SUB
+MLN"

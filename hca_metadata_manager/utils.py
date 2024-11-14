@@ -75,7 +75,7 @@ def upload_to_sheet(df, gc, spreadsheet_id, title):
         worksheet.clear()  # Clear existing content before update
         worksheet.resize(rows=len(df_cleaned) + 1, cols=len(df_cleaned.columns))  # Resize if needed
     except gspread.WorksheetNotFound:
-        worksheet = spreadsheet.add_worksheet(title=title, rows=str(len(df_cleaned) + 1), cols=str(len(df_cleaned.columns)))
+        worksheet = spreadsheet.add_worksheet(title=title, rows=1000, cols=str(len(df_cleaned.columns)))
 
     values_to_upload = [df_cleaned.columns.tolist()] + df_cleaned.values.tolist()
     worksheet.update(values_to_upload)  # Update worksheet with new values
@@ -725,7 +725,7 @@ def move_sheet_in_drive(file_id, folder_id, credentials):
                                  addParents=folder_id,
                                  removeParents=previous_parents,
                                  fields='id, parents').execute()
-    
+
 def load_descriptions(csv_path=None):
     """
     Load descriptions from a CSV file. If no path is provided, load from a default location.
@@ -755,20 +755,29 @@ def add_metadata_descriptions(metadata_dfs, descriptions_csv=None):
     # Load descriptions
     descriptions = load_descriptions(csv_path=descriptions_csv)
     updated_dfs = {}  # Dictionary to store updated DataFrames
+    
     # Process each metadata DataFrame
     for tab_name, metadata_df in metadata_dfs.items():
         # Find shared columns between descriptions and metadata DataFrame
         shared_cols = descriptions.columns.intersection(metadata_df.columns)
+        
         # Combine descriptions with metadata DataFrame
         combined_df = pd.concat([
             descriptions[shared_cols],  # Description rows
             metadata_df                 # Original metadata DataFrame
         ])
+        
+        # Reorder columns to match the original metadata DataFrame
+        combined_df = combined_df[metadata_df.columns]
+        
         # Reset index to clean up the DataFrame
         combined_df.reset_index(drop=True, inplace=True)
+        
         # Store the updated DataFrame in the dictionary
         updated_dfs[tab_name] = combined_df
+    
     return updated_dfs
+
 
 # def load_sheets_metadata(credentials, googlesheets):
 #     spreadsheet_ids = []
